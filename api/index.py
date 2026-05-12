@@ -2,11 +2,26 @@
 SPK Draft Pick MLBB — AHP-SAW
 Vercel Serverless Entry Point
 """
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_from_directory
-import json, os, csv, math
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+import json, os, csv, math, traceback
 
-# Paths — Vercel runs from project root
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Paths — try multiple strategies for Vercel compatibility
+def find_base_dir():
+    # Strategy 1: relative to this file (api/index.py -> project root)
+    d = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if os.path.exists(os.path.join(d, "AHP-SAW - DATA HERO.csv")):
+        return d
+    # Strategy 2: current working directory
+    d = os.getcwd()
+    if os.path.exists(os.path.join(d, "AHP-SAW - DATA HERO.csv")):
+        return d
+    # Strategy 3: /var/task (Vercel runtime)
+    d = "/var/task"
+    if os.path.exists(os.path.join(d, "AHP-SAW - DATA HERO.csv")):
+        return d
+    return os.getcwd()
+
+BASE_DIR = find_base_dir()
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -215,6 +230,17 @@ def api_recommend():
         ranked = calc_saw(cands, SCORES, w, exclude, scenario)
         results[role] = ranked[:5]
     return jsonify(results)
+
+@app.route("/health")
+def health():
+    return jsonify({
+        "status": "ok",
+        "base_dir": BASE_DIR,
+        "heroes_count": len(HEROES),
+        "template_dir": TEMPLATE_DIR,
+        "templates_exist": os.path.exists(TEMPLATE_DIR),
+        "csv_exist": os.path.exists(os.path.join(BASE_DIR, "AHP-SAW - DATA HERO.csv")),
+    })
 
 # For local development
 if __name__ == "__main__":

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — SPK MLBB{% endblock %}
+{% block content %}
+<main class="main-content">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem">
+    <div>
+      <h1 style="font-family:Orbitron;font-size:1.5rem;font-weight:800;color:var(--accent-gold);letter-spacing:2px">ADMIN PANEL</h1>
+      <p style="color:var(--text-muted);font-size:.82rem">Kelola data hero dan parameter SPK</p>
+    </div>
+    <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+  </div>
+  <div id="adminMsg" style="display:none;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:.82rem;color:#10b981"></div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:1.5rem">
+    <button class="role-btn active" onclick="showTab(this,'heroes')">Data Hero</button>
+    <button class="role-btn" onclick="showTab(this,'ahp')">Bobot AHP</button>
+    <button class="role-btn" onclick="showTab(this,'stats')">Statistik</button>
+  </div>
+
+  <!-- Heroes Tab -->
+  <div class="admin-tab" id="tab-heroes">
+    <div class="card">
+      <div class="card-title">Data Hero ({{ heroes|length }})</div>
+      <div style="margin-bottom:1rem"><input type="search" id="adminSearch" placeholder="Cari hero..." oninput="adminFilter()" style="max-width:300px"></div>
+      <div class="results-table-wrapper" style="max-height:65vh">
+        <table class="results-table" id="adminTable">
+          <thead><tr>
+            <th>ID</th><th>Hero</th><th>Class</th>
+            {% set short = {"Difficulty":"Diff","Crowd Control":"CC","Mobility":"Mob","Utility":"Util","Durability":"Dur","Offense":"Off"} %}
+            {% for c in criteria %}<th style="text-align:center;font-size:.65rem">{{ short[c] }}</th>{% endfor %}
+            <th>Aksi</th>
+          </tr></thead>
+          <tbody>
+            {% for h in heroes %}
+            <tr data-id="{{ h.id }}" data-name="{{ h.name|lower }}">
+              <td style="font-family:Orbitron;font-size:.68rem;color:var(--text-muted)">{{ h.id }}</td>
+              <td class="hero-name" style="font-size:.82rem" id="name-{{ h.id }}">{{ h.name }}</td>
+              <td class="hero-class-sm" id="class-{{ h.id }}">{{ h.class }}</td>
+              {% for c in criteria %}
+              <td class="criteria-score" style="font-size:.78rem" id="score-{{ h.id }}-{{ loop.index0 }}">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
+              {% endfor %}
+              <td><button class="btn btn-sm" style="background:rgba(79,172,254,0.12);color:#4facfe;padding:4px 12px;border:1px solid rgba(79,172,254,0.25);border-radius:4px;cursor:pointer;font-size:.7rem" onclick="editHero('{{ h.id }}')">Edit</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- AHP Tab -->
+  <div class="admin-tab" id="tab-ahp" style="display:none">
+    <div style="display:grid;gap:1rem">
+      {% for r in roles %}
+      {% set a = ahp[r] %}
+      <div class="card">
+        <div class="card-title">{{ r }}</div>
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
+          <div style="font-size:.78rem">
+            <span style="color:var(--text-muted)">CR: </span>
+            <span style="color:{{ '#10b981' if a.consistent else '#ef4444' }};font-weight:700;font-family:Orbitron">{{ "%.4f"|format(a.cr) }}</span>
+            <span style="color:{{ '#10b981' if a.consistent else '#ef4444' }};font-size:.72rem;margin-left:6px">{{ "Konsisten" if a.consistent else "Tidak Konsisten" }}</span>
+          </div>
+          <div style="flex:1;display:flex;gap:8px;flex-wrap:wrap">
+            {% for c in criteria %}
+            <span style="font-size:.72rem;padding:4px 10px;border-radius:12px;background:rgba(100,140,255,0.08);color:var(--text-secondary)">
+              {{ short[c] }}: <strong style="color:var(--text-primary)">{{ "%.1f"|format(a.weights[loop.index0] * 100) }}%</strong>
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Stats Tab -->
+  <div class="admin-tab" id="tab-stats" style="display:none">
+    <div class="ahp-stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="ahp-stat"><div class="label">Total Hero</div><div class="value" style="color:#4facfe">{{ heroes|length }}</div></div>
+      {% for r in roles %}
+      <div class="ahp-stat"><div class="label">{{ r }}</div><div class="value" style="color:#f0b429;font-size:1.2rem">{{ role_counts[r] }}</div></div>
+      {% endfor %}
+      <div class="ahp-stat"><div class="label">Kriteria</div><div class="value" style="color:#a78bfa">6</div></div>
+      <div class="ahp-stat"><div class="label">Expert</div><div class="value" style="color:#10b981">11</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Edit Modal -->
+<div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+  <div class="card" style="width:100%;max-width:500px;padding:2rem">
+    <div class="card-title">Edit Hero</div>
+    <input type="hidden" id="editId">
+    <div class="form-group"><label>Nama Hero</label><input type="text" id="editName"></div>
+    <div class="form-group"><label>Class</label><input type="text" id="editClass"></div>
+    {% for c in criteria %}
+    <div class="form-group"><label>{{ c }}</label><input type="number" step="0.25" min="0" max="5" id="editC{{ loop.index0 }}"></div>
+    {% endfor %}
+    <div style="display:flex;gap:10px;margin-top:1rem">
+      <button class="btn btn-primary" onclick="saveHero()">Simpan</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CRITERIA = {{ criteria | tojson }};
+
+function showTab(btn, tab) {
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.admin-tab').forEach(t => t.style.display='none');
+  document.getElementById('tab-'+tab).style.display='';
+}
+
+function adminFilter() {
+  const q = document.getElementById('adminSearch').value.toLowerCase();
+  document.querySelectorAll('#adminTable tbody tr').forEach(tr => {
+    tr.style.display = tr.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+
+function editHero(id) {
+  document.getElementById('editId').value = id;
+  document.getElementById('editName').value = document.getElementById('name-'+id).textContent;
+  document.getElementById('editClass').value = document.getElementById('class-'+id).textContent;
+  for (let i=0;i<6;i++) {
+    document.getElementById('editC'+i).value = document.getElementById('score-'+id+'-'+i).textContent.trim();
+  }
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+function saveHero() {
+  const id = document.getElementById('editId').value;
+  const data = { id, name: document.getElementById('editName').value, class: document.getElementById('editClass').value };
+  CRITERIA.forEach((c,i) => { data[c] = parseFloat(document.getElementById('editC'+i).value)||0; });
+
+  fetch('/admin/update_hero', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+  }).then(r => r.json()).then(res => {
+    if (res.ok) {
+      document.getElementById('name-'+id).textContent = data.name;
+      document.getElementById('class-'+id).textContent = data.class;
+      CRITERIA.forEach((c,i) => { document.getElementById('score-'+id+'-'+i).textContent = data[c].toFixed(2); });
+      closeModal();
+      const msg = document.getElementById('adminMsg');
+      msg.textContent = 'Data hero berhasil diupdate!';
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display='none', 3000);
+    }
+  });
+}
+</script>
+{% endblock %}

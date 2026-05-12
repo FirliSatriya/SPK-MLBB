@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SPK Draft Pick MLBB — AHP-SAW{% endblock %}</title>
+  <meta name="description" content="Sistem Pendukung Keputusan Pemilihan Hero MLBB menggunakan AHP-SAW">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/" class="navbar-brand">
+        <div class="logo-icon">S</div>
+        <span>SPK <span class="accent">MLBB</span></span>
+      </a>
+      <div style="display:flex;align-items:center;gap:8px">
+        <ul class="navbar-links" style="margin-right:8px">
+          <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Draft Pick</a></li>
+          <li><a href="/ahp" {% if request.path == '/ahp' %}class="active"{% endif %}>Bobot AHP</a></li>
+          <li><a href="/heroes" {% if request.path == '/heroes' %}class="active"{% endif %}>Data Hero</a></li>
+          <li><a href="/login" style="opacity:0.5">Admin</a></li>
+        </ul>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="themeBtn">☀️</button>
+      </div>
+    </div>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <footer class="footer">
+    SPK Draft Pick MLBB — AHP-SAW &copy; 2026 | Skripsi
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('spk_theme', next);
+      document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+    (function() {
+      const saved = localStorage.getItem('spk_theme');
+      if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+        const btn = document.getElementById('themeBtn');
+        if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+      }
+    })();
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

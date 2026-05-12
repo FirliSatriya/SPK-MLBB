@@ -1,0 +1,134 @@
+ID_HERO,NAMA_HERO,CLASS,ROLE,,ID_HERO,NAMA_HERO,CLASS,ROLE,,ID_HERO,NAMA_HERO,CLASS,ROLE,,ID_HERO,NAMA_HERO,CLASS,ROLE,,ID_HERO,NAMA_HERO,CLASS,ROLE
+H001,AAMON,ASSASSIN,JUNGLING,,H002,AKAI,TANK,ROAMING,,H003,ALDOUS,FIGHTER,EXP LANE,,H004,ALICE,"MAGE, TANK",MID LANE,,H018,BEATRIX,MARKSMAN,GOLD LANE
+H004,ALICE,"MAGE, TANK",JUNGLING,,H007,ANGELA,SUPPORT,ROAMING,,H004,ALICE,"MAGE, TANK",EXP LANE,,H012,AURORA,MAGE,MID LANE,,H021,BRODY,MARKSMAN,GOLD LANE
+H005,ALPHA,FIGHTER,JUNGLING,,H010,ATLAS,TANK,ROAMING,,H005,ALPHA,FIGHTER,EXP LANE,,H015,BANE,"FIGHTER, MAGE",MID LANE,,H022,BRUNO,MARKSMAN,GOLD LANE
+H006,ALUCARD,"ASSASSIN, FIGHTER",JUNGLING,,H013,BADANG,FIGHTER,ROAMING,,H008,ARGUS,FIGHTER,EXP LANE,,H024,CECILION,MAGE,MID LANE,,H029,CLINT,MARKSMAN,GOLD LANE
+H011,AULUS,FIGHTER,JUNGLING,,H019,BELERICK,TANK,ROAMING,,H009,ARLOTT,FIGHTER,EXP LANE,,H025,CHANG E,MAGE,MID LANE,,H030,CLAUDE,MARKSMAN,GOLD LANE
+H014,BALMOND,FIGHTER,JUNGLING,,H023,CARMILLA,"SUPPORT, TANK",ROAMING,,H013,BADANG,FIGHTER,EXP LANE,,H031,CYCLOPS,MAGE,MID LANE,,H047,GRANGER,MARKSMAN,GOLD LANE
+H015,BANE,"FIGHTER, MAGE",JUNGLING,,H026,CHIP,"SUPPORT, TANK",ROAMING,,H014,BALMOND,FIGHTER,EXP LANE,,H037,EUDORA,MAGE,MID LANE,,H051,HANABI,MARKSMAN,GOLD LANE
+H016,BARATS,"FIGHTER, TANK",JUNGLING,,H027,CHOU,FIGHTER,ROAMING,,H015,BANE,"FIGHTER, MAGE",EXP LANE,,H039,FARAMIS,"MAGE, SUPPORT",MID LANE,,H053,HARITH,MAGE,GOLD LANE
+H017,BAXIA,TANK,JUNGLING,,H032,DIGGIE,SUPPORT,ROAMING,,H020,BENEDETTA,FIGHTER,EXP LANE,,H046,GORD,MAGE,MID LANE,,H059,IRITHEL,MARKSMAN,GOLD LANE
+H033,DYROTH,FIGHTER,JUNGLING,,H034,EDITH,"MARKSMAN, TANK",ROAMING,,H027,CHOU,FIGHTER,EXP LANE,,H050,GUSION,ASSASSIN,MID LANE,,H060,IXIA,MARKSMAN,GOLD LANE
+H038,FANNY,ASSASSIN,JUNGLING,,H036,ESTES,SUPPORT,ROAMING,,H028,CICI,FIGHTER,EXP LANE,,H053,HARITH,MAGE,MID LANE,,H069,KARRIE,MARKSMAN,GOLD LANE
+H042,FREDRINN,"FIGHTER, TANK",JUNGLING,,H040,FLORYN,SUPPORT,ROAMING,,H033,DYROTH,FIGHTER,EXP LANE,,H054,HARLEY,"ASSASSIN, MAGE",MID LANE,,H073,KIMMY,"MAGE, MARKSMAN",GOLD LANE
+H043,FREYA,FIGHTER,JUNGLING,,H041,FRANCO,TANK,ROAMING,,H034,EDITH,"MARKSMAN, TANK",EXP LANE,,H065,KADITA,"ASSASSIN, MAGE",MID LANE,,H076,LAYLA,MARKSMAN,GOLD LANE
+H050,GUSION,ASSASSIN,JUNGLING,,H044,GATOTKACA,"FIGHTER, TANK",ROAMING,,H035,ESMERALDA,"MAGE, TANK",EXP LANE,,H066,KAGURA,MAGE,MID LANE,,H078,LESLEY,MARKSMAN,GOLD LANE
+H052,HANZO,ASSASSIN,JUNGLING,,H045,GLOO,TANK,ROAMING,,H043,FREYA,FIGHTER,EXP LANE,,H073,KIMMY,"MAGE, MARKSMAN",MID LANE,,H088,MELISSA,MARKSMAN,GOLD LANE
+H054,HARLEY,"ASSASSIN, MAGE",JUNGLING,,H048,GROCK,"FIGHTER, TANK",ROAMING,,H044,GATOTKACA,"FIGHTER, TANK",EXP LANE,,H081,LOU YI,MAGE,MID LANE,,H089,MIYA,MARKSMAN,GOLD LANE
+H055,HAYABUSA,ASSASSIN,JUNGLING,,H057,HILDA,"FIGHTER, TANK",ROAMING,,H045,GLOO,TANK,EXP LANE,,H083,LUNOX,MAGE,MID LANE,,H092,MOSKOV,MARKSMAN,GOLD LANE
+H056,HELCURT,ASSASSIN,JUNGLING,,H058,HYLOS,TANK,ROAMING,,H048,GROCK,"FIGHTER, TANK",EXP LANE,,H084,LYLIA,MAGE,MID LANE,,H094,NATAN,MARKSMAN,GOLD LANE
+H063,JOY,ASSASSIN,JUNGLING,,H061,JAWHEAD,FIGHTER,ROAMING,,H049,GUINEVERRE,FIGHTER,EXP LANE,,H093,NANA,MAGE,MID LANE,,H098,OBSIDIA,MARKSMAN,GOLD LANE
+H064,JULIAN,"ASSASSIN, FIGHTER",JUNGLING,,H062,JOHNSON,"SUPPORT, TANK",ROAMING,,H057,HILDA,"FIGHTER, TANK",EXP LANE,,H097,NOVARIA,MAGE,MID LANE,,H103,POPOL AND KUPA,MARKSMAN,GOLD LANE
+H070,KARINA,ASSASSIN,JUNGLING,,H067,KAJA,"FIGHTER, SUPPORT",ROAMING,,H061,JAWHEAD,FIGHTER,EXP LANE,,H099,ODETTE,MAGE,MID LANE,,H121,WANWAN,MARKSMAN,GOLD LANE
+H074,LANCELOT,ASSASSIN,JUNGLING,,H068,KALEA,"FIGHTER, SUPPORT",ROAMING,,H071,KHALEED,FIGHTER,EXP LANE,,H101,PHARSA,MAGE,MID LANE,,,,,
+H076,LEOMORD,FIGHTER,JUNGLING,,H071,KHALEED,FIGHTER,ROAMING,,H075,LAPU-LAPU,FIGHTER,EXP LANE,,H117,VALE,MAGE,MID LANE,,,,,
+H079,LING,ASSASSIN,JUNGLING,,H072,KHUFRA,TANK,ROAMING,,H082,LUKAS,FIGHTER,EXP LANE,,H118,VALENTINA,MAGE,MID LANE,,,,,
+H082,LUKAS,FIGHTER,JUNGLING,,H080,LOLITA,"SUPPORT, TANK",ROAMING,,H086,MASHA,"FIGHTER, TANK",EXP LANE,,H119,VALIR,MAGE,MID LANE,,,,,
+H085,MARTIS,FIGHTER,JUNGLING,,H087,MATHILDA,"ASSASSIN, SUPPORT",ROAMING,,H090,MINSITTHAR,FIGHTER,EXP LANE,,H120,VEXANA,MAGE,MID LANE,,,,,
+H095,NATALIA,ASSASSIN,JUNGLING,,H090,MINSITTHAR,FIGHTER,ROAMING,,H100,PAQUITO,FIGHTER,EXP LANE,,H123,XAVIER,MAGE,MID LANE,,,,,
+H096,NOLAN,ASSASSIN,JUNGLING,,H091,MINOTAUR,"SUPPORT, TANK",ROAMING,,H102,PHOVEUS,FIGHTER,EXP LANE,,H127,YVE,MAGE,MID LANE,,,,,
+H103,POPOL AND KUPA,MARKSMAN,JUNGLING,,H104,RAFAELA,SUPPORT,ROAMING,,H106,RUBY,FIGHTER,EXP LANE,,H128,ZETIAN,MAGE,MID LANE,,,,,
+H105,ROGER,"FIGHTER, MARKSMAN",JUNGLING,,H107,SABER,ASSASSIN,ROAMING,,H109,SILVANNA,FIGHTER,EXP LANE,,H129,ZHASK,MAGE,MID LANE,,,,,
+H107,SABER,ASSASSIN,JUNGLING,,H108,SELENA,"ASSASSIN, MAGE",ROAMING,,H111,SORA,FIGHTER,EXP LANE,,H130,ZHUXIN,MAGE,MID LANE,,,,,
+H108,SELENA,"ASSASSIN, MAGE",JUNGLING,,H115,TIGREAL,TANK,ROAMING,,H112,SUN,FIGHTER,EXP LANE,,H108,SELENA,"ASSASSIN, MAGE",MID LANE,,,,,
+H110,SOYOU,"ASSASSIN, FIGHTER",JUNGLING,,,,,,,H113,TERIZLA,"FIGHTER, TANK",EXP LANE,,,,,,,,,,
+H112,SUN,FIGHTER,JUNGLING,,,,,,,H114,THAMUZ,FIGHTER,EXP LANE,,,,,,,,,,
+H124,YI SUNSHIN,"ASSASSIN, MARKSMAN",JUNGLING,,,,,,,H116,URANUS,TANK,EXP LANE,,,,,,,,,,
+H125,YIN,"ASSASSIN, FIGHTER",JUNGLING,,,,,,,H122,X BORG,FIGHTER,EXP LANE,,,,,,,,,,
+,,,,,,,,,,H125,YIN,"ASSASSIN, FIGHTER",EXP LANE,,,,,,,,,,
+,,,,,,,,,,H126,YUZHONG,FIGHTER,EXP LANE,,,,,,,,,,
+,,,,,,,,,,H131,ZILONG,FIGHTER,EXP LANE,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+JUNGLING,,,,,,,,contoh ,Kriteria,Difficulty (cost),Crowd Control,Mobility,Utility,Durability,Offense,,,,,,,,
+Kriteria,Difficulty (cost),Crowd Control (benefit),Mobility (benefit),Utility (benefit),Durability (benefit),Offense (benefit),,,Difficulty (cost),1,1/7,1/5,1/7,1/5,1/3,,,,,,,,
+Difficulty (cost),1,,,,,,,,Crowd Control,7,1,3,1,3,7,,,,,,,,
+Crowd Control (benefit),,1,,,,,,,Mobility,5,1/3,1,1/3,1/2,3,,,,,,,,
+Mobility (benefit),,,1,,,,,,Utility,7,1,3,1,3,7,,,,,,,,
+Utility (benefit),,,,1,,,,,Durability,5,1/3,2,1/3,1,5,,,,,,,,
+Durability (benefit),,,,,1,,,,Offense,3,1/7,1/3,1/7,1/5,1,,,,,,,,
+Offense (benefit),,,,,,1,,,,,,,,,,,,,,,,,
+,,,,,,,,penjelasan,,,,,,,,,,,,,,,
+ROAMING,,,,,,,,"Ini tabel buat nentuin prioritas kriteria Roaming. Kita bandingin kriteria dua-dua. Angka 1 berarti sama penting, 3 agak lebih penting, 5 lebih penting, 7 jauh lebih penting, 9 ekstrem. Kalau saya isi CC lawan Offense = 7, artinya CC jauh lebih penting dari damage untuk roamer. Kebalikannya otomatis Offense lawan CC = 1/7 supaya konsisten. 
+
+Anggap kita sepakat dengan logika roamer:
+Roamer tugasnya buka war / lock musuh / cover temen, bukan jadi tukang damage.
+Jadi:
+CC dan Utility itu “inti roamer”.
+Durability juga penting biar nggak gampang mati.
+Mobility penting buat rotasi.
+Offense biasanya nomor sekian.
+Difficulty (cost) dianggap paling kecil pengaruhnya (ini cost = “semakin susah, semakin jelek”, jadi bukan prioritas utama).
+
+Contoh 3 keputusan (yang gampang dipahami)
+CC vs Offense
+Tanya: “Roamer mending jago stun/lock atau jago damage?”
+Jawab: “Stun/lock jauh lebih penting.”
+Isi: 7 di (CC, Offense)
+otomatis (Offense, CC) = 1/7
+Utility vs Mobility
+Tanya: “Roamer mending banyak support (heal, shield, save, vision) atau lincah?”
+Jawab: “Support sedikit lebih penting.”
+Isi: 3 di (Utility, Mobility)
+otomatis (Mobility, Utility) = 1/3
+Durability vs CC
+Tanya: “Lebih penting tebel atau punya stun?”
+Jawab: “Dua-duanya penting, tapi stun sedikit lebih penting.”
+Isi: 3 di (CC, Durability)
+otomatis (Durability, CC) = 1/3",,,,,,,,,,,,,,,
+Kriteria,Difficulty (cost),Crowd Control (benefit),Mobility (benefit),Utility (benefit),Durability (benefit),Offense (benefit),,,,,,,,,,,,,,,,,
+Difficulty (cost),1,,,,,,,,,,,,,,,,,,,,,,
+Crowd Control (benefit),,1,,,,,,,,,,,,,,,,,,,,,
+Mobility (benefit),,,1,,,,,,,,,,,,,,,,,,,,
+Utility (benefit),,,,1,,,,,,,,,,,,,,,,,,,
+Durability (benefit),,,,,1,,,,,,,,,,,,,,,,,,
+Offense (benefit),,,,,,1,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+EXP LANE,,,,,,,,,,,,,,,,,,,,,,,
+Kriteria,Difficulty (cost),Crowd Control (benefit),Mobility (benefit),Utility (benefit),Durability (benefit),Offense (benefit),,,,,,,,,,,,,,,,,
+Difficulty (cost),1,,,,,,,,,,,,,,,,,,,,,,
+Crowd Control (benefit),,1,,,,,,,,,,,,,,,,,,,,,
+Mobility (benefit),,,1,,,,,,,,,,,,,,,,,,,,
+Utility (benefit),,,,1,,,,,,,,,,,,,,,,,,,
+Durability (benefit),,,,,1,,,,,,,,,,,,,,,,,,
+Offense (benefit),,,,,,1,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+MID LANE,,,,,,,,,,,,,,,,,,,,,,,
+Kriteria,Difficulty (cost),Crowd Control (benefit),Mobility (benefit),Utility (benefit),Durability (benefit),Offense (benefit),,,,,,,,,,,,,,,,,
+Difficulty (cost),1,,,,,,,,,,,,,,,,,,,,,,
+Crowd Control (benefit),,1,,,,,,,,,,,,,,,,,,,,,
+Mobility (benefit),,,1,,,,,,,,,,,,,,,,,,,,
+Utility (benefit),,,,1,,,,,,,,,,,,,,,,,,,
+Durability (benefit),,,,,1,,,,,,,,,,,,,,,,,,
+Offense (benefit),,,,,,1,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+GOLD LANE,,,,,,,,,,,,,,,,,,,,,,,
+Kriteria,Difficulty (cost),Crowd Control (benefit),Mobility (benefit),Utility (benefit),Durability (benefit),Offense (benefit),,,,,,,,,,,,,,,,,
+Difficulty (cost),1,,,,,,,,,,,,,,,,,,,,,,
+Crowd Control (benefit),,1,,,,,,,,,,,,,,,,,,,,,
+Mobility (benefit),,,1,,,,,,,,,,,,,,,,,,,,
+Utility (benefit),,,,1,,,,,,,,,,,,,,,,,,,
+Durability (benefit),,,,,1,,,,,,,,,,,,,,,,,,
+Offense (benefit),,,,,,1,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+jungling ,adrin,pomprov jatim juara 2 ,,,,,,,,,,,,,,,,,,,,,
+,lazim,rektor cup upn juara 1,,,,,,,,,,,,,,,,,,,,,
+,reno,coach ukm esports ,,,,,,,,,,,,,,,,,,,,,
+midlane ,dzaki,rektor cup upn juara 1 ,,,,,,,,,,,,,,,,,,,,,
+,reno,coach ukm esports ,,,,,,,,,,,,,,,,,,,,,
+,faisal alfarisi,winner aec ,,,,,,,,,,,,,,,,,,,,,
+explane,fikri,rektor cup upn juara 1,,,,,,,,,,,,,,,,,,,,,
+,faisal alfarosi,winner aec ,,,,,,,,,,,,,,,,,,,,,
+,reno,coach ukm esports,,,,,,,,,,,,,,,,,,,,,
+goldlane ,minul,winner aec ,,,,,,,,,,,,,,,,,,,,,
+,abdil ,rektor cup upn juara 1,,,,,,,,,,,,,,,,,,,,,
+,reno,coach ukm esports,,,,,,,,,,,,,,,,,,,,,
+roaming,irvan ,winner aec,,,,,,,,,,,,,,,,,,,,,
+,reynaldi,rektor cup upn juara 1,,,,,,,,,,,,,,,,,,,,,
+,reno,coach ukm esports,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+total ada 11 expert,1 coach ( 5 role ) ,,,,,,,,,,,,,,,,,,,,,,
+,2 player per role ,,,,,,,,,,,,,,,,,,,,,,

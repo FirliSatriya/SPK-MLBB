@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Bobot AHP — SPK MLBB{% endblock %}
+{% block content %}
+<main class="main-content">
+  <div class="page-header">
+    <h1>BOBOT AHP</h1>
+    <p>Hasil pembobotan kriteria menggunakan Analytical Hierarchy Process dari penilaian expert</p>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:2rem">
+    {% for r in roles %}
+    <button class="role-btn {% if loop.first %}active{% endif %}" onclick="showRole(this,'{{ r }}')">{{ r }}</button>
+    {% endfor %}
+  </div>
+  {% for r in roles %}
+  {% set a = ahp[r] %}
+  <div class="ahp-role-panel {% if not loop.first %}hidden{% endif %}" data-role="{{ r }}">
+    <div class="ahp-stats animate-in">
+      <div class="ahp-stat"><div class="label">Lambda Max</div><div class="value" style="color:#4facfe">{{ "%.4f"|format(a.lambda_max) }}</div></div>
+      <div class="ahp-stat"><div class="label">Consistency Index (CI)</div><div class="value" style="color:#a78bfa">{{ "%.4f"|format(a.ci) }}</div></div>
+      <div class="ahp-stat"><div class="label">Consistency Ratio (CR)</div><div class="value {{ 'status-consistent' if a.consistent else 'status-inconsistent' }}">{{ "%.4f"|format(a.cr) }}</div></div>
+      <div class="ahp-stat"><div class="label">Status</div><div class="value {{ 'status-consistent' if a.consistent else 'status-inconsistent' }}" style="font-size:1rem">{{ "KONSISTEN" if a.consistent else "TIDAK KONSISTEN" }}</div></div>
+    </div>
+    <div class="card animate-in" style="max-width:700px;margin:0 auto">
+      <div class="card-title">&#9878; Bobot Kriteria — {{ r }}</div>
+      <div class="weight-bars">
+        {% set bar_classes = ["bar-difficulty","bar-cc","bar-mobility","bar-utility","bar-durability","bar-offense"] %}
+        {% for c in criteria %}
+        {% set w = a.weights[loop.index0] %}
+        <div class="weight-row">
+          <span class="label">{{ c }}</span>
+          <div class="bar-bg">
+            <div class="bar-fill {{ bar_classes[loop.index0] }}" style="width:{{ (w * 200)|round }}%">{{ "%.2f"|format(w * 100) }}%</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:1rem;font-size:.78rem;color:var(--text-muted)">Threshold CR ≤ 0.10 | RI (n=6) = 1.24 | Aggregasi: Geometric Mean dari 3 expert</div>
+    </div>
+    <div class="card animate-in" style="max-width:700px;margin:1.5rem auto 0">
+      <div class="card-title">&#128202; Tabel Bobot</div>
+      <div class="results-table-wrapper">
+        <table class="results-table">
+          <thead><tr><th>Kriteria</th><th>Tipe</th><th style="text-align:right">Bobot</th><th style="text-align:right">Persentase</th></tr></thead>
+          <tbody>
+            {% for c in criteria %}
+            {% set w = a.weights[loop.index0] %}
+            <tr>
+              <td style="font-weight:600">{{ c }}</td>
+              <td><span style="font-size:.75rem;padding:2px 10px;border-radius:12px;background:{{ 'rgba(79,172,254,0.12)' if c == 'Difficulty' else 'rgba(16,185,129,0.12)' }};color:{{ '#4facfe' if c == 'Difficulty' else '#10b981' }}">{{ 'Cost' if c == 'Difficulty' else 'Benefit' }}</span></td>
+              <td style="text-align:right;font-family:Orbitron;font-weight:700;font-size:.85rem">{{ "%.6f"|format(w) }}</td>
+              <td style="text-align:right;font-weight:600">{{ "%.2f"|format(w * 100) }}%</td>
+            </tr>
+            {% endfor %}
+            <tr style="border-top:2px solid rgba(100,140,255,0.2)">
+              <td style="font-weight:700">Total</td><td></td>
+              <td style="text-align:right;font-family:Orbitron;font-weight:700;font-size:.85rem">{{ "%.6f"|format(a.weights|sum) }}</td>
+              <td style="text-align:right;font-weight:700">100.00%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</main>
+<style>.hidden{display:none}</style>
+{% endblock %}
+{% block scripts %}
+<script>
+function showRole(btn, role) {
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.ahp-role-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelector(`.ahp-role-panel[data-role="${role}"]`).classList.remove('hidden');
+}
+</script>
+{% endblock %}

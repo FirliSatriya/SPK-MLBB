@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Data Hero — SPK MLBB{% endblock %}
+{% block content %}
+<main class="main-content">
+  <div class="page-header">
+    <h1>DATA HERO</h1>
+    <p>Database {{ heroes|length }} hero Mobile Legends beserta skor 6 kriteria utama</p>
+  </div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end">
+      <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
+        <label>Cari Hero</label>
+        <input type="search" id="heroSearch" placeholder="Ketik nama hero..." oninput="filterTable()">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Filter Role</label>
+        <div class="role-selector">
+          <button class="role-btn btn-sm active" onclick="setRole(this,'')">Semua</button>
+          {% for r in roles %}
+          <button class="role-btn btn-sm" onclick="setRole(this,'{{ r }}')">{{ r }}</button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">&#128100; Daftar Hero <span id="countLabel" style="font-family:Inter;font-weight:400;font-size:.75rem;color:var(--text-secondary);margin-left:auto">{{ heroes|length }} hero</span></div>
+    <div class="results-table-wrapper" style="max-height:70vh">
+      <table class="results-table" id="heroTable">
+        <thead><tr>
+          <th style="width:60px">ID</th><th>Hero</th><th>Class</th><th>Role</th>
+          {% set short = {"Difficulty":"Diff","Crowd Control":"CC","Mobility":"Mob","Utility":"Util","Durability":"Dur","Offense":"Off"} %}
+          {% for c in criteria %}<th style="width:55px;text-align:center">{{ short[c] }}</th>{% endfor %}
+        </tr></thead>
+        <tbody>
+          {% for h in heroes %}
+          <tr data-name="{{ h.name|lower }}" data-roles="{{ h.roles|join(',') }}">
+            <td style="font-family:Orbitron;font-size:.72rem;color:var(--text-muted)">{{ h.id }}</td>
+            <td class="hero-name">{{ h.name }}</td>
+            <td><span class="hero-class-sm">{{ h.class }}</span></td>
+            <td><span class="hero-class-sm">{{ h.roles|join(', ') }}</span></td>
+            {% for c in criteria %}
+            <td class="criteria-score">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+let currentRole = '';
+function setRole(btn, role) {
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentRole = role;
+  filterTable();
+}
+function filterTable() {
+  const q = document.getElementById('heroSearch').value.toLowerCase();
+  let count = 0;
+  document.querySelectorAll('#heroTable tbody tr').forEach(tr => {
+    const name = tr.dataset.name;
+    const roles = tr.dataset.roles;
+    const matchName = name.includes(q);
+    const matchRole = !currentRole || roles.includes(currentRole);
+    const show = matchName && matchRole;
+    tr.style.display = show ? '' : 'none';
+    if (show) count++;
+  });
+  document.getElementById('countLabel').textContent = count + ' hero';
+}
+</script>
+{% endblock %}

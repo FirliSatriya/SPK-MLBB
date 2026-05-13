@@ -38,7 +38,7 @@
             <td style="font-family:Orbitron;font-size:.72rem;color:var(--text-muted)">{{ h.id }}</td>
             <td class="hero-name">{{ h.name }}</td>
             <td><span class="hero-class-sm">{{ h.class }}</span></td>
-            <td><span class="hero-class-sm">{{ h.roles|join(', ') }}</span></td>
+            <td>{% for r in h.roles %}<span class="role-tag">{{ r }}</span>{% endfor %}</td>
             {% for c in criteria %}
             <td class="criteria-score">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
             {% endfor %}

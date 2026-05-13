@@ -2,249 +2,361 @@
 {% block title %}Draft Pick — SPK MLBB{% endblock %}
 {% block content %}
 <main class="main-content" id="app">
-  <!-- Start Screen -->
-  <div id="startScreen" style="text-align:center;padding-top:8vh">
-    <h1 style="font-family:Orbitron;font-size:2.5rem;background:linear-gradient(135deg,#f0b429,#ffd666);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem">DRAFT PICK</h1>
-    <p style="color:var(--text-secondary);font-size:1.1rem;margin-bottom:2.5rem">Simulasi Draft Pick MLBB dengan rekomendasi AHP-SAW</p>
-    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem">
-      <button class="scenario-btn active" data-s="default" onclick="setScenario(this)">Default</button>
-      <button class="scenario-btn" data-s="safe" onclick="setScenario(this)">Prioritas Aman</button>
-      <button class="scenario-btn" data-s="aggressive" onclick="setScenario(this)">Prioritas Agresif</button>
-    </div>
-    <button class="btn btn-primary" style="font-size:1rem;padding:16px 48px" onclick="startDraft()">MULAI DRAFT</button>
-  </div>
 
-  <!-- Draft Board -->
-  <div id="draftBoard" style="display:none">
-    <!-- Timer -->
-    <div style="margin-bottom:1rem">
-      <div style="height:6px;background:rgba(100,140,255,0.1);border-radius:3px;overflow:hidden">
-        <div id="timerBar" style="height:100%;width:100%;background:#10b981;border-radius:3px;transition:width 1s linear"></div>
+  <!-- ====== 1. LANDING SCREEN ====== -->
+  <section id="landingScreen" class="draft-landing animate-in">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTq1UFCxvxBWsXoT5rSHsX9hUd52mUWqWBFAQ&s"
+      alt="Logo Kampus" class="campus-logo" onerror="this.style.display='none'">
+    <div class="identity-block">
+      <div class="identity-name">FIRLI SATRIYA</div>
+      <div class="identity-prodi">D-IV Teknik Informatika</div>
+    </div>
+    <h1>DRAFT PICK</h1>
+    <p class="subtitle">SISTEM PENDUKUNG KEPUTUSAN PEMILIHAN HERO</p>
+
+    <button class="btn btn-primary" style="font-size:.95rem;padding:15px 50px" onclick="startDraft()">MULAI DRAFT
+      PICK</button>
+  </section>
+
+  <!-- ====== 2. DRAFT BOARD ====== -->
+  <section id="draftBoard" style="display:none">
+    <div class="draft-header">
+      <div class="timer-wrap">
+        <div class="timer-bar-bg">
+          <div id="timerBar" class="timer-bar"></div>
+        </div>
+        <div class="timer-info">
+          <span id="turnLabel" class="turn-label">TIM KITA — BAN 1</span>
+          <span id="timerText" class="timer-text">30s</span>
+        </div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:.8rem">
-        <span id="turnLabel" style="font-weight:700;font-family:Orbitron;color:#4facfe">TIM KITA — BAN 1</span>
-        <span id="timerText" style="font-family:Orbitron;font-weight:700;font-size:1.1rem;color:#10b981">30s</span>
-      </div>
+      <button class="btn btn-secondary btn-sm" onclick="resetDraft()">RESET</button>
     </div>
 
-    <div style="display:grid;grid-template-columns:200px 1fr 200px;gap:1rem;margin-bottom:1rem">
-      <!-- Blue Team -->
-      <div class="card" style="padding:1rem">
-        <div style="font-size:.7rem;font-family:Orbitron;font-weight:700;color:#4facfe;letter-spacing:1px;margin-bottom:8px">TIM KITA</div>
-        <div style="font-size:.65rem;color:#ef4444;font-weight:600;margin-bottom:4px">BANS</div>
-        <div id="blueBans" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px"></div>
-        <div style="font-size:.65rem;color:#4facfe;font-weight:600;margin-bottom:4px">PICKS</div>
+    <div class="draft-board">
+      <!-- Blue team -->
+      <div class="team-panel blue">
+        <div class="team-header">TIM KITA</div>
+        <div class="team-subhead">BAN</div>
+        <div class="ban-slots" id="blueBans"></div>
+        <div class="team-subhead">PICK</div>
         <div id="bluePicks"></div>
       </div>
 
-      <!-- Center: Hero Grid -->
-      <div>
-        <input type="search" id="heroSearch" placeholder="Cari hero..." oninput="filterHeroes()" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:.9rem;outline:none;margin-bottom:8px">
-        <div id="roleFilter" style="display:none;margin-bottom:8px"></div>
-        <div id="heroGrid" style="max-height:calc(100vh - 340px);overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px"></div>
+      <!-- Center: Recommendations (with role + scenario picker) -->
+      <div class="recs-panel">
+        <div class="card-title" style="margin-bottom:.5rem">&#9733; REKOMENDASI HERO</div>
+
+        <div class="recs-controls">
+          <div>
+            <div class="recs-tabs-label">Skenario</div>
+            <div class="recs-scenario-tabs" id="scenarioTabs">
+              <div class="recs-tab active" data-s="default" onclick="setScenarioTab(this)">Default</div>
+              <div class="recs-tab" data-s="safe" onclick="setScenarioTab(this)">Prioritas Aman</div>
+              <div class="recs-tab" data-s="aggressive" onclick="setScenarioTab(this)">Prioritas Agresif</div>
+            </div>
+          </div>
+          <div>
+            <div class="recs-tabs-label">Role</div>
+            <div class="recs-role-tabs" id="roleTabs"></div>
+          </div>
+        </div>
+
+        <div id="recsStatus" class="recs-status dim">Memuat rekomendasi...</div>
+        <div id="recsList" class="recs-list"></div>
       </div>
 
-      <!-- Red Team -->
-      <div class="card" style="padding:1rem">
-        <div style="font-size:.7rem;font-family:Orbitron;font-weight:700;color:#ef4444;letter-spacing:1px;margin-bottom:8px">MUSUH</div>
-        <div style="font-size:.65rem;color:#ef4444;font-weight:600;margin-bottom:4px">BANS</div>
-        <div id="redBans" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px"></div>
-        <div style="font-size:.65rem;color:#ef4444;font-weight:600;margin-bottom:4px">PICKS</div>
+      <!-- Red team -->
+      <div class="team-panel red">
+        <div class="team-header">MUSUH</div>
+        <div class="team-subhead">BAN</div>
+        <div class="ban-slots" id="redBans"></div>
+        <div class="team-subhead">PICK</div>
         <div id="redPicks"></div>
       </div>
     </div>
+  </section>
 
-    <!-- Recommendations -->
-    <div id="recsPanel" class="card" style="padding:1rem;display:none">
-      <div class="card-title" style="margin-bottom:8px;font-size:.75rem">&#9733; REKOMENDASI HERO</div>
-      <div id="recsGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
+  <!-- ====== 3. FINISH SCREEN ====== -->
+  <section id="finishScreen" class="finish-screen" style="display:none">
+    <h2
+      style="font-family:Orbitron;text-align:center;font-size:1.6rem;color:var(--accent-gold);letter-spacing:3px;margin-bottom:.5rem">
+      DRAFT SELESAI</h2>
+    <p style="text-align:center;color:var(--text-secondary);font-size:.85rem">Berikut ringkasan komposisi kedua tim</p>
+    <div class="finish-grid">
+      <div class="team-panel blue">
+        <div class="team-header">TIM KITA</div>
+        <div id="finalBlue"></div>
+      </div>
+      <div class="team-panel red">
+        <div class="team-header">MUSUH</div>
+        <div id="finalRed"></div>
+      </div>
     </div>
-  </div>
-
-  <!-- Finished Screen -->
-  <div id="finishScreen" style="display:none">
-    <h1 style="font-family:Orbitron;text-align:center;font-size:1.8rem;color:#f0b429;margin-bottom:2rem">DRAFT SELESAI</h1>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:900px;margin:0 auto">
-      <div class="card"><div class="card-title" style="color:#4facfe">TIM KITA</div><div id="finalBlue"></div></div>
-      <div class="card"><div class="card-title" style="color:#ef4444">TIM MUSUH</div><div id="finalRed"></div></div>
+    <div style="text-align:center;margin-top:1.75rem;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="resetDraft()">DRAFT ULANG</button>
+      <button class="btn btn-primary" onclick="backToLanding()">KEMBALI KE BERANDA</button>
     </div>
-    <div style="text-align:center;margin-top:2rem"><button class="btn btn-primary" onclick="resetDraft()">DRAFT ULANG</button></div>
-  </div>
+  </section>
 </main>
 {% endblock %}
 
 {% block scripts %}
 <script>
-const ALL_HEROES = {{ heroes | tojson }};
-const ROLES = {{ roles | tojson }};
-const DRAFT_SEQ = [
-  {phase:"ban",team:"blue",label:"BAN 1"},{phase:"ban",team:"red",label:"BAN 1"},
-  {phase:"ban",team:"blue",label:"BAN 2"},{phase:"ban",team:"red",label:"BAN 2"},
-  {phase:"ban",team:"blue",label:"BAN 3"},{phase:"ban",team:"red",label:"BAN 3"},
-  {phase:"pick",team:"blue",label:"PICK 1"},{phase:"pick",team:"red",label:"PICK 1"},
-  {phase:"pick",team:"red",label:"PICK 2"},{phase:"pick",team:"blue",label:"PICK 2"},
-  {phase:"pick",team:"blue",label:"PICK 3"},{phase:"pick",team:"red",label:"PICK 3"},
-  {phase:"ban",team:"red",label:"BAN 4"},{phase:"ban",team:"blue",label:"BAN 4"},
-  {phase:"ban",team:"red",label:"BAN 5"},{phase:"ban",team:"blue",label:"BAN 5"},
-  {phase:"pick",team:"red",label:"PICK 4"},{phase:"pick",team:"blue",label:"PICK 4"},
-  {phase:"pick",team:"blue",label:"PICK 5"},{phase:"pick",team:"red",label:"PICK 5"},
-];
-const TIMER_MAX = 30;
-let step=0, blueBans=[], redBans=[], bluePicks=[], redPicks=[], timer=TIMER_MAX, timerInterval=null, scenario="default", selRole="";
+  const ALL_HEROES = {{ heroes | tojson }};
+  const ROLES = {{ roles | tojson }};
+  const DRAFT_SEQ = [
+    { phase: "ban", team: "blue", label: "BAN 1" }, { phase: "ban", team: "red", label: "BAN 1" },
+    { phase: "ban", team: "blue", label: "BAN 2" }, { phase: "ban", team: "red", label: "BAN 2" },
+    { phase: "ban", team: "blue", label: "BAN 3" }, { phase: "ban", team: "red", label: "BAN 3" },
+    { phase: "pick", team: "blue", label: "PICK 1" }, { phase: "pick", team: "red", label: "PICK 1" },
+    { phase: "pick", team: "red", label: "PICK 2" }, { phase: "pick", team: "blue", label: "PICK 2" },
+    { phase: "pick", team: "blue", label: "PICK 3" }, { phase: "pick", team: "red", label: "PICK 3" },
+    { phase: "ban", team: "red", label: "BAN 4" }, { phase: "ban", team: "blue", label: "BAN 4" },
+    { phase: "ban", team: "red", label: "BAN 5" }, { phase: "ban", team: "blue", label: "BAN 5" },
+    { phase: "pick", team: "red", label: "PICK 4" }, { phase: "pick", team: "blue", label: "PICK 4" },
+    { phase: "pick", team: "blue", label: "PICK 5" }, { phase: "pick", team: "red", label: "PICK 5" },
+  ];
+  const TIMER_MAX = 30;
+  const AVATAR_COLORS = ['#5b8fc7', '#c25c5c', '#6fa886', '#8a78c0', '#b08842', '#5fa7b8', '#c2845c', '#7c6ec0', '#a08947', '#6b8aa5'];
 
-function setScenario(btn) {
-  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  scenario = btn.dataset.s;
-}
+  let step = 0, blueBans = [], redBans = [], bluePicks = [], redPicks = [];
+  let timer = TIMER_MAX, timerInterval = null;
+  let scenario = "default";
+  let selectedRole = "JUNGLING";
+  let currentRecs = {};   // { ROLE: [hero,...] } for current scenario
 
-function startDraft() {
-  document.getElementById('startScreen').style.display='none';
-  document.getElementById('draftBoard').style.display='block';
-  step=0; blueBans=[]; redBans=[]; bluePicks=[]; redPicks=[];
-  renderDraft(); startTimer();
-}
-
-function resetDraft() {
-  clearInterval(timerInterval);
-  document.getElementById('startScreen').style.display='';
-  document.getElementById('draftBoard').style.display='none';
-  document.getElementById('finishScreen').style.display='none';
-  step=0; blueBans=[]; redBans=[]; bluePicks=[]; redPicks=[]; timer=TIMER_MAX;
-}
-
-function startTimer() {
-  timer = TIMER_MAX;
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    timer--;
-    updateTimerUI();
-    if (timer <= 0) clearInterval(timerInterval);
-  }, 1000);
-}
-
-function updateTimerUI() {
-  const pct = (timer/TIMER_MAX)*100;
-  const color = timer>15?'#10b981':timer>5?'#f0b429':'#ef4444';
-  document.getElementById('timerBar').style.width = pct+'%';
-  document.getElementById('timerBar').style.background = color;
-  document.getElementById('timerText').textContent = timer+'s';
-  document.getElementById('timerText').style.color = color;
-}
-
-function getAllUsed() { return [...blueBans,...redBans,...bluePicks,...redPicks]; }
-function getHero(id) { return ALL_HEROES.find(h => h.id === id); }
-
-function confirmHero(heroId) {
-  if (step >= DRAFT_SEQ.length) return;
-  const cur = DRAFT_SEQ[step];
-  if (cur.phase==='ban') { cur.team==='blue' ? blueBans.push(heroId) : redBans.push(heroId); }
-  else { cur.team==='blue' ? bluePicks.push(heroId) : redPicks.push(heroId); }
-  document.getElementById('heroSearch').value = '';
-  selRole = '';
-  step++;
-  if (step >= DRAFT_SEQ.length) { finishDraft(); return; }
-  renderDraft(); startTimer();
-}
-
-function finishDraft() {
-  clearInterval(timerInterval);
-  document.getElementById('draftBoard').style.display='none';
-  document.getElementById('finishScreen').style.display='block';
-  const mkList = (ids, el) => {
-    el.innerHTML = ids.map(id => {
-      const h = getHero(id);
-      return h ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(100,140,255,0.08)"><span style="font-weight:700">${h.name}</span><span style="color:var(--text-muted);font-size:.8rem">${h.class}</span></div>` : '';
-    }).join('');
-  };
-  mkList(bluePicks, document.getElementById('finalBlue'));
-  mkList(redPicks, document.getElementById('finalRed'));
-}
-
-function renderDraft() {
-  const cur = DRAFT_SEQ[step];
-  const isOur = cur.team==='blue';
-  const isPick = cur.phase==='pick';
-  const teamName = isOur ? 'TIM KITA' : 'MUSUH';
-  document.getElementById('turnLabel').textContent = `${teamName} — ${cur.label}`;
-  document.getElementById('turnLabel').style.color = isOur ? '#4facfe' : '#ef4444';
-
-  // Bans
-  ['blue','red'].forEach(team => {
-    const bans = team==='blue' ? blueBans : redBans;
-    const el = document.getElementById(team+'Bans');
-    el.innerHTML = Array(5).fill(0).map((_,i) => {
-      const h = bans[i] ? getHero(bans[i]) : null;
-      return `<div style="width:34px;height:34px;border-radius:6px;background:${h?'rgba(239,68,68,0.2)':'rgba(100,140,255,0.06)'};border:1px solid ${h?'rgba(239,68,68,0.3)':'rgba(100,140,255,0.1)'};display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#ef4444;font-weight:600">${h?h.name.slice(0,3):''}</div>`;
-    }).join('');
-  });
-
-  // Picks
-  ['blue','red'].forEach(team => {
-    const picks = team==='blue' ? bluePicks : redPicks;
-    const color = team==='blue' ? '#4facfe' : '#ef4444';
-    const el = document.getElementById(team+'Picks');
-    el.innerHTML = Array(5).fill(0).map((_,i) => {
-      const h = picks[i] ? getHero(picks[i]) : null;
-      return `<div style="padding:6px 8px;margin-bottom:3px;border-radius:6px;background:${h?`rgba(${team==='blue'?'79,172,254':'239,68,68'},0.12)`:'rgba(100,140,255,0.04)'};border:1px solid ${h?`rgba(${team==='blue'?'79,172,254':'239,68,68'},0.25)`:'rgba(100,140,255,0.08)'};font-size:.75rem;font-weight:${h?700:400};color:${h?color:'var(--text-muted)'}">${h?h.name:`Pick ${i+1}`}</div>`;
-    }).join('');
-  });
-
-  // Role filter (only for our pick turn)
-  const rf = document.getElementById('roleFilter');
-  if (isPick && isOur) {
-    rf.style.display = 'flex';
-    rf.style.gap = '4px';
-    rf.style.flexWrap = 'wrap';
-    rf.innerHTML = `<button class="role-btn btn-sm ${selRole===''?'active':''}" onclick="selRole='';renderDraft()">Semua</button>` +
-      ROLES.map(r => `<button class="role-btn btn-sm ${selRole===r?'active':''}" onclick="selRole='${r}';renderDraft()">${r}</button>`).join('');
-  } else {
-    rf.style.display = 'none';
+  /* ---------------- avatar helpers ---------------- */
+  function avatarBg(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  }
+  function heroAvatarHTML(hero, size = '') {
+    const bg = avatarBg(hero.name);
+    const initials = hero.name.replace(/[^A-Z0-9 ]/gi, '').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || hero.name.slice(0, 2).toUpperCase();
+    return `<div class="hero-avatar ${size}" style="background:${bg}">${initials}</div>`;
   }
 
-  renderHeroGrid();
-  if (isPick && isOur) fetchRecs();
-  else document.getElementById('recsPanel').style.display = 'none';
-}
+  /* ---------------- screen flow ---------------- */
+  function showOnly(id) {
+    ['landingScreen', 'draftBoard', 'finishScreen'].forEach(s => {
+      const el = document.getElementById(s);
+      if (el) el.style.display = (s === id) ? '' : 'none';
+    });
+  }
+  function backToLanding() { clearInterval(timerInterval); showOnly('landingScreen'); }
 
-function filterHeroes() { renderHeroGrid(); }
+  function setScenarioTab(el) {
+    document.querySelectorAll('#scenarioTabs .recs-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    scenario = el.dataset.s;
+    fetchRecs();
+  }
+  function setRoleTab(el) {
+    document.querySelectorAll('#roleTabs .recs-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    selectedRole = el.dataset.r;
+    renderRecsList();
+  }
+  function renderRoleTabs() {
+    document.getElementById('roleTabs').innerHTML = ROLES.map((r, i) =>
+      `<div class="recs-tab ${r === selectedRole ? 'active' : ''}" data-r="${r}" onclick="setRoleTab(this)">${r}</div>`
+    ).join('');
+  }
 
-function renderHeroGrid() {
-  const used = new Set(getAllUsed());
-  const q = document.getElementById('heroSearch').value.toLowerCase();
-  let list = ALL_HEROES.filter(h => !used.has(h.id) && h.name.toLowerCase().includes(q));
-  if (selRole) list = list.filter(h => h.roles.includes(selRole));
-  const grid = document.getElementById('heroGrid');
-  grid.innerHTML = list.slice(0,60).map(h =>
-    `<button onclick="confirmHero('${h.id}')" style="padding:8px 6px;background:rgba(15,25,55,0.6);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;text-align:center;transition:all .2s;color:var(--text-primary)" onmouseover="this.style.borderColor='rgba(240,180,41,0.5)';this.style.background='rgba(240,180,41,0.08)'" onmouseout="this.style.borderColor='var(--border-color)';this.style.background='rgba(15,25,55,0.6)'">
-      <div style="font-size:.78rem;font-weight:700">${h.name}</div>
-      <div style="font-size:.6rem;color:var(--text-muted)">${h.class.split(',')[0]}</div>
-    </button>`
-  ).join('');
-}
+  function startDraft() {
+    step = 0; blueBans = []; redBans = []; bluePicks = []; redPicks = [];
+    scenario = 'default'; selectedRole = 'JUNGLING';
+    document.querySelectorAll('#scenarioTabs .recs-tab').forEach(t => t.classList.toggle('active', t.dataset.s === 'default'));
+    renderRoleTabs();
+    showOnly('draftBoard');
+    renderDraft();
+    startTimer();
+  }
+  function resetDraft() {
+    clearInterval(timerInterval);
+    step = 0; blueBans = []; redBans = []; bluePicks = []; redPicks = []; timer = TIMER_MAX;
+    startDraft();
+  }
 
-function fetchRecs() {
-  const used = getAllUsed();
-  fetch('/api/recommend', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({exclude: used, scenario: scenario})
-  })
-  .then(r => r.json())
-  .then(data => {
-    const panel = document.getElementById('recsPanel');
-    panel.style.display = 'block';
-    const grid = document.getElementById('recsGrid');
-    grid.innerHTML = ROLES.map(role => {
-      const items = data[role] || [];
-      return `<div>
-        <div style="font-size:.65rem;font-family:Orbitron;font-weight:700;color:#f0b429;margin-bottom:6px;letter-spacing:1px">${role}</div>
-        ${items.map((h,i) => `<div onclick="confirmHero('${h.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;margin-bottom:3px;border-radius:6px;background:${i===0?'rgba(240,180,41,0.08)':'transparent'};border:${i===0?'1px solid rgba(240,180,41,0.2)':'1px solid transparent'};cursor:pointer" onmouseover="this.style.background='rgba(240,180,41,0.12)'" onmouseout="this.style.background='${i===0?'rgba(240,180,41,0.08)':'transparent'}'">
-          <span style="font-size:.75rem;font-weight:${i===0?700:500};color:${i===0?'#f0b429':'var(--text-secondary)'}">${i+1}. ${h.name}</span>
-          <span style="font-size:.65rem;color:var(--text-muted);font-family:Orbitron">${(h.vi*100).toFixed(0)}%</span>
-        </div>`).join('')}
+  /* ---------------- timer ---------------- */
+  function startTimer() {
+    timer = TIMER_MAX;
+    clearInterval(timerInterval);
+    updateTimerUI();
+    timerInterval = setInterval(() => {
+      timer--;
+      updateTimerUI();
+      if (timer <= 0) { clearInterval(timerInterval); autoPick(); }
+    }, 1000);
+  }
+  function updateTimerUI() {
+    const pct = (timer / TIMER_MAX) * 100;
+    const color = timer > 15 ? 'var(--accent-green)' : timer > 5 ? 'var(--accent-gold)' : 'var(--accent-red)';
+    document.getElementById('timerBar').style.width = pct + '%';
+    document.getElementById('timerBar').style.background = color;
+    document.getElementById('timerText').textContent = timer + 's';
+    document.getElementById('timerText').style.color = color;
+  }
+
+  /* ---------------- helpers ---------------- */
+  function getAllUsed() { return [...blueBans, ...redBans, ...bluePicks, ...redPicks]; }
+  function getHero(id) { return ALL_HEROES.find(h => h.id === id); }
+
+  function autoPick() {
+    const cur = DRAFT_SEQ[step];
+    if (!cur) return;
+    const used = new Set(getAllUsed());
+    let pick = null;
+    // For enemy pick: use top recommendation across all roles
+    if (cur.team === 'red' && cur.phase === 'pick' && currentRecs) {
+      for (const role of ROLES) {
+        const items = currentRecs[role] || [];
+        const top = items.find(h => !used.has(h.id));
+        if (top) { pick = top.id; break; }
+      }
+    }
+    if (!pick) {
+      const avail = ALL_HEROES.find(h => !used.has(h.id));
+      pick = avail ? avail.id : null;
+    }
+    if (pick) confirmHero(pick);
+  }
+
+  function confirmHero(heroId) {
+    if (step >= DRAFT_SEQ.length) return;
+    const cur = DRAFT_SEQ[step];
+    if (getAllUsed().includes(heroId)) return;
+    if (cur.phase === 'ban') {
+      (cur.team === 'blue' ? blueBans : redBans).push(heroId);
+    } else {
+      (cur.team === 'blue' ? bluePicks : redPicks).push(heroId);
+    }
+    step++;
+    if (step >= DRAFT_SEQ.length) { finishDraft(); return; }
+    renderDraft();
+    startTimer();
+  }
+
+  /* ---------------- main render ---------------- */
+  function renderDraft() {
+    const cur = DRAFT_SEQ[step];
+    const isOur = cur.team === 'blue';
+    const teamName = isOur ? 'TIM KITA' : 'MUSUH';
+    const lbl = document.getElementById('turnLabel');
+    lbl.textContent = `${teamName} — ${cur.label}`;
+    lbl.className = 'turn-label' + (isOur ? '' : ' enemy');
+
+    ['blue', 'red'].forEach(team => {
+      const bans = team === 'blue' ? blueBans : redBans;
+      const el = document.getElementById(team + 'Bans');
+      el.innerHTML = Array(5).fill(0).map((_, i) => {
+        const h = bans[i] ? getHero(bans[i]) : null;
+        if (h) return `<div class="ban-slot filled" title="${h.name}">${heroAvatarHTML(h, 'sm')}</div>`;
+        return `<div class="ban-slot"></div>`;
+      }).join('');
+    });
+
+    ['blue', 'red'].forEach(team => {
+      const picks = team === 'blue' ? bluePicks : redPicks;
+      const el = document.getElementById(team + 'Picks');
+      el.innerHTML = Array(5).fill(0).map((_, i) => {
+        const h = picks[i] ? getHero(picks[i]) : null;
+        if (h) {
+          return `<div class="pick-slot filled ${team}">${heroAvatarHTML(h, 'sm')}<div class="pmeta"><span class="pname">${h.name}</span><span class="pclass">${h.class.split(',')[0]}</span></div></div>`;
+        }
+        return `<div class="pick-slot">Pick ${i + 1}</div>`;
+      }).join('');
+    });
+
+    fetchRecs();
+  }
+
+  function finishDraft() {
+    clearInterval(timerInterval);
+    showOnly('finishScreen');
+    const mkList = (ids, el, team) => {
+      el.innerHTML = ids.map((id, i) => {
+        const h = getHero(id); if (!h) return '';
+        return `<div class="pick-slot filled ${team}">${heroAvatarHTML(h)}<div class="pmeta"><span class="pname">${i + 1}. ${h.name}</span><span class="pclass">${h.class.split(',')[0]}</span></div></div>`;
+      }).join('');
+    };
+    mkList(bluePicks, document.getElementById('finalBlue'), 'blue');
+    mkList(redPicks, document.getElementById('finalRed'), 'red');
+  }
+
+  /* ---------------- recommendations ---------------- */
+  function fetchRecs() {
+    const used = getAllUsed();
+    const status = document.getElementById('recsStatus');
+    status.textContent = 'Memuat rekomendasi...';
+    status.className = 'recs-status dim';
+    fetch('/api/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exclude: used, scenario })
+    })
+      .then(r => r.json())
+      .then(data => {
+        currentRecs = data;
+        renderRecsList();
+      })
+      .catch(() => {
+        document.getElementById('recsList').innerHTML = '';
+        status.textContent = 'Gagal memuat rekomendasi';
+        status.className = 'recs-status';
+        status.style.color = 'var(--accent-red)';
+      });
+  }
+
+  function renderRecsList() {
+    const cur = DRAFT_SEQ[step];
+    const isOur = cur && cur.team === 'blue';
+    const isBan = cur && cur.phase === 'ban';
+    const isPick = cur && cur.phase === 'pick';
+
+    // Any user-controlled turn (all bans + blue picks) is clickable
+    const clickable = isBan || (isPick && isOur);
+    const banMode = isBan;
+
+    const status = document.getElementById('recsStatus');
+    if (clickable) {
+      const verb = banMode ? 'ban' : 'pick';
+      const who = banMode ? (isOur ? 'tim kita' : 'musuh') : 'tim kita';
+      status.textContent = `Giliran ${who} — klik hero untuk ${verb}`;
+      status.style.color = banMode ? 'var(--accent-red)' : 'var(--accent-gold)';
+      status.className = 'recs-status';
+    } else {
+      status.textContent = 'Menunggu giliran musuh — rekomendasi sebagai referensi';
+      status.style.color = '';
+      status.className = 'recs-status dim';
+    }
+
+    const items = (currentRecs[selectedRole] || []).slice(0, 8);
+    const list = document.getElementById('recsList');
+    if (items.length === 0) {
+      list.innerHTML = '<div class="recs-empty">Tidak ada hero tersedia untuk role ini</div>';
+      return;
+    }
+    list.innerHTML = items.map((h, i) => {
+      const cls = ['rec-item'];
+      if (i === 0) cls.push('top');
+      if (!clickable) cls.push('rec-disabled');
+      if (banMode) cls.push('ban-mode');
+      const click = clickable ? `onclick="confirmHero('${h.id}')"` : '';
+      const hint = clickable ? `<span class="action-hint">${banMode ? 'BAN' : 'PICK'}</span>` : '';
+      return `<div class="${cls.join(' ')}" ${click}>
+        <span class="rank-num">${i + 1}</span>
+        ${heroAvatarHTML(h)}
+        <div class="rmeta">
+          <span class="rname">${h.name}</span>
+          <span class="rclass">${h.class}</span>
+        </div>
+        <span class="rvi">${(h.vi * 100).toFixed(0)}%</span>
+        ${hint}
       </div>`;
     }).join('');
-  });
-}
+  }
 </script>
 {% endblock %}

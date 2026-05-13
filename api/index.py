@@ -3,7 +3,9 @@ SPK Draft Pick MLBB — AHP-SAW
 Vercel Serverless Entry Point
 """
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import os, csv, math
+from markupsafe import Markup
+from urllib.parse import quote
+import os, csv, math, re
 
 def find_base_dir():
     d = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -176,9 +178,40 @@ for role in ROLES:
 for h in HEROES:
     h["scores"] = SCORES.get(h["id"], {})
 
+HERO_AVATAR_COLORS = ['#5b8fc7', '#c25c5c', '#6fa886', '#8a78c0', '#b08842',
+                     '#5fa7b8', '#c2845c', '#7c6ec0', '#a08947', '#6b8aa5']
+
+def hero_color(name):
+    h = 0
+    for c in str(name):
+        h = (h * 31 + ord(c)) & 0xFFFFFFFF
+    return HERO_AVATAR_COLORS[h % len(HERO_AVATAR_COLORS)]
+
+def hero_initials(name):
+    words = [w for w in re.split(r'[^A-Za-z0-9]+', str(name)) if w]
+    if len(words) >= 2:
+        return (words[0][0] + words[1][0]).upper()
+    return (words[0] if words else str(name))[:2].upper()
+
+def portrait_html(name, size=""):
+    bg = hero_color(name)
+    init = hero_initials(name)
+    seed = quote(str(name))
+    src = f"https://api.dicebear.com/7.x/adventurer-neutral/svg?seed={seed}"
+    return Markup(
+        f'<div class="hero-avatar {size}" style="background:{bg}">'
+        f'<span class="initials">{init}</span>'
+        f'<img src="{src}" alt="" loading="lazy" onerror="this.remove()">'
+        f'</div>'
+    )
+
 @app.context_processor
 def inject_admin():
     return {"is_admin": bool(session.get("admin"))}
+
+app.jinja_env.globals['hero_color'] = hero_color
+app.jinja_env.globals['hero_initials'] = hero_initials
+app.jinja_env.globals['portrait_html'] = portrait_html
 
 @app.route("/")
 def draft():

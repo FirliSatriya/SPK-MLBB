@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id" data-theme="dark">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,27 +8,33 @@
   <meta name="description" content="Sistem Pendukung Keputusan Pemilihan Hero MLBB menggunakan AHP-SAW">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
   <nav class="navbar">
     <div class="navbar-inner">
       <a href="/" class="navbar-brand">
-        <div class="logo-icon">S</div>
-        <span>SPK <span class="accent">MLBB</span></span>
+        <div class="logo-icon">M</div>
+        <span><span class="accent">Mobile Legends Bang Bang</span></span>
       </a>
       <div class="navbar-right">
         <ul class="navbar-links">
-          <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Draft Pick</a></li>
+          <li><a href="/" {% if request.path=='/' %}class="active" {% endif %}>Draft Pick</a></li>
           {% if is_admin %}
-          <li><a href="/ahp" {% if request.path == '/ahp' %}class="active"{% endif %}>Bobot AHP</a></li>
-          <li><a href="/heroes" {% if request.path == '/heroes' %}class="active"{% endif %}>Data Hero</a></li>
-          <li><a href="/admin" {% if request.path == '/admin' %}class="active"{% endif %}>Admin</a></li>
+          <li><a href="/ahp" {% if request.path=='/ahp' %}class="active" {% endif %}>Bobot AHP</a></li>
+          <li><a href="/heroes" {% if request.path=='/heroes' %}class="active" {% endif %}>Data Hero</a></li>
+          <li><a href="/admin" {% if request.path=='/admin' %}class="active" {% endif %}>Admin</a></li>
           <li><a href="/logout" class="nav-logout">Logout</a></li>
           {% else %}
-          <li><a href="/login" {% if request.path == '/login' %}class="active"{% endif %}>Admin</a></li>
+          <li><a href="/login" {% if request.path=='/login' %}class="active" {% endif %}>Admin</a></li>
           {% endif %}
         </ul>
         <button class="theme-toggle" onclick="toggleTheme()" title="Ganti tema" id="themeBtn" aria-label="Toggle theme">
-          <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+          </svg>
         </button>
       </div>
     </div>
@@ -53,7 +60,7 @@
       localStorage.setItem('spk_theme', next);
       setThemeIcon(next);
     }
-    (function() {
+    (function () {
       const saved = localStorage.getItem('spk_theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       document.addEventListener('DOMContentLoaded', () => setThemeIcon(saved));
@@ -61,4 +68,5 @@
   </script>
   {% block scripts %}{% endblock %}
 </body>
+
 </html>

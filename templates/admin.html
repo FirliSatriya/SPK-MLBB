@@ -42,7 +42,7 @@
             {% for h in heroes %}
             <tr data-id="{{ h.id }}" data-name="{{ h.name|lower }}">
               <td style="font-family:Orbitron;font-size:.68rem;color:var(--text-muted)">{{ h.id }}</td>
-              <td><span class="hero-name">{{ h.name }}</span></td>
+              <td><div style="display:flex;align-items:center;gap:10px">{{ portrait_html(h.name, 'sm') }}<span class="hero-name">{{ h.name }}</span></div></td>
               <td><span class="hero-class-sm">{{ h.class }}</span></td>
               <td>{% for r in h.roles %}<span class="role-tag">{{ r }}</span>{% endfor %}</td>
               {% for c in criteria %}
@@ -267,7 +267,7 @@ function editHero(id) {
   document.getElementById('editId').value = id;
   const tr = document.querySelector('#heroTbody tr[data-id="' + id + '"]');
   const tds = tr.querySelectorAll('td');
-  document.getElementById('editName').value = tds[1].innerText.trim();
+  document.getElementById('editName').value = tr.querySelector('.hero-name').innerText.trim();
   document.getElementById('editClass').value = tds[2].innerText.trim();
   const roleTags = [...tds[3].querySelectorAll('.role-tag')].map(t => t.textContent.trim());
   document.querySelectorAll('#editRoles input').forEach(i => {

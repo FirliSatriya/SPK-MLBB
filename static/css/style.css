@@ -1522,11 +1522,52 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
   border-top: 1px solid var(--v2-line-gold);
   background: linear-gradient(180deg, rgba(229,184,75,0.04), rgba(2,5,12,0.95));
   padding: 12px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rec-bar-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 16px;
   align-items: center;
 }
+@media (max-width: 1100px) {
+  .rec-bar-row { grid-template-columns: 1fr; }
+}
+.rec-role-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.rec-role-tab {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--v2-line-soft);
+  color: var(--v2-text-muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  border-radius: 3px;
+}
+.rec-role-tab:hover { color: var(--v2-text); border-color: var(--v2-line-gold); }
+.rec-role-tab.active {
+  background: rgba(229,184,75,0.18);
+  border-color: var(--v2-gold);
+  color: var(--v2-gold);
+  box-shadow: 0 0 14px rgba(229,184,75,0.25) inset;
+}
+.rec-role-tab.filled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.rec-role-tab.filled:hover { color: var(--v2-text-muted); border-color: var(--v2-line-soft); }
+[data-theme="light"] .rec-role-tab { background: rgba(15,23,42,0.04); }
+[data-theme="light"] .rec-role-tab.active { background: rgba(178,125,41,0.18); }
+
 .v2-rec-title {
   font-family: 'Orbitron', monospace;
   font-size: 10.5px; letter-spacing: 0.2em;

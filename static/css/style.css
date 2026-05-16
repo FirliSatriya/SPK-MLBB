@@ -2428,3 +2428,62 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
 /* ── Scrollbar ── */
 [data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--border-strong); }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
+
+/* ============================================================
+   Rotate-to-landscape overlay
+   Hanya tampil di touch device (pointer: coarse) yang sedang portrait
+   dan layar fisiknya kecil (≤ 900px lebar). Laptop & desktop tidak
+   pernah men-trigger karena pointer-nya fine.
+   ============================================================ */
+.rotate-prompt {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--bg-primary, #060B18);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  color: var(--text-primary, #F3F4F6);
+}
+.rotate-prompt .rp-phone {
+  color: var(--accent-gold, #E5B84B);
+  animation: rp-tilt 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 14px rgba(229,184,75,0.45));
+}
+.rotate-prompt .rp-arrow {
+  color: var(--accent-gold, #E5B84B);
+  margin-top: -8px;
+  opacity: 0.85;
+}
+@keyframes rp-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  40%, 60% { transform: rotate(-90deg); }
+}
+.rotate-prompt h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--accent-gold, #E5B84B);
+  margin: 1.5rem 0 0.5rem;
+  letter-spacing: 2.5px;
+}
+.rotate-prompt p {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #9CA3AF);
+  max-width: 320px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Trigger only for touch device + portrait + small screen */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 900px) {
+  .rotate-prompt { display: flex; }
+  /* Hide everything else underneath so user only sees the prompt */
+  body > .navbar,
+  body > .main-content,
+  body > main,
+  body > .footer { display: none !important; }
+}

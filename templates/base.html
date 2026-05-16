@@ -3,13 +3,56 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" id="spkViewport">
+  <script>
+    /* Touch device (HP/tablet) di landscape → force width=1280 supaya layout
+       sama dengan web di laptop. Di portrait → biarkan device-width supaya
+       overlay "putar ke landscape" bisa muncul (lihat CSS .rotate-prompt). */
+    (function () {
+      function update() {
+        var vp = document.getElementById('spkViewport');
+        if (!vp) return;
+        var isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        var isLandscape = window.matchMedia
+          ? window.matchMedia('(orientation: landscape)').matches
+          : (window.innerWidth > window.innerHeight);
+        var devMaxDim = Math.max(
+          (screen && screen.width) || 0,
+          (screen && screen.height) || 0
+        );
+        var isSmallDevice = devMaxDim > 0 && devMaxDim < 1200;
+        if (isCoarse && isSmallDevice && isLandscape) {
+          vp.setAttribute('content', 'width=1280');
+        } else {
+          vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        }
+      }
+      update();
+      window.addEventListener('orientationchange', update);
+      window.addEventListener('resize', update);
+    })();
+  </script>
   <title>{% block title %}SPK Draft Pick MLBB — AHP-SAW{% endblock %}</title>
   <meta name="description" content="Sistem Pendukung Keputusan Pemilihan Hero MLBB menggunakan AHP-SAW">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
 <body>
+  <!-- Phone-portrait overlay: prompts user to rotate to landscape for desktop layout -->
+  <div class="rotate-prompt" aria-hidden="true">
+    <svg viewBox="0 0 64 64" class="rp-phone" width="80" height="80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="20" y="6" width="24" height="52" rx="4"/>
+      <line x1="28" y1="11" x2="36" y2="11"/>
+      <circle cx="32" cy="52" r="1.6" fill="currentColor"/>
+    </svg>
+    <svg viewBox="0 0 64 64" class="rp-arrow" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 32a18 18 0 0 1 36 0"/>
+      <polyline points="44,22 50,32 56,22"/>
+    </svg>
+    <h2>PUTAR HP KE LANDSCAPE</h2>
+    <p>Aplikasi ini didesain dengan layout draft pick MLBB.<br>Putar HP ke posisi mendatar untuk pengalaman terbaik.</p>
+  </div>
+
   <nav class="navbar">
     <div class="navbar-inner">
       <a href="/" class="navbar-brand">

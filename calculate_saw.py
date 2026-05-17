@@ -39,7 +39,7 @@ CRITERIA_FILES = {
     "Mobility":       ("AHP-SAW - MOBILITY.csv",       ["DASH/BLINK", "ROTATION SPEED", "ESCAPE CAPABILITY", "FLEXIBILITY"]),
     "Utility":        ("AHP-SAW - UTILITY.csv",         ["TEAM SUPPORT", "ZONING / CONTROL", "DISRUPTION", "PROTECTION"]),
     "Durability":     ("AHP-SAW - DURABILITY.csv",      ["BASE TANKINESS", "SUSTAIN/REGEN", "DAMAGE MITIGATION", "SURVIVAL TOOLS"]),
-    "Offense":        ("AHP-SAW - OFFENSE.csv",         ["DAMAGE", "KILL THREAT/BURST", "POSITIONING REQUIREMENT", "DECISION COMPLEXITY"]),
+    "Offense":        ("AHP-SAW - OFFENSE.csv",         ["DAMAGE", "KILL THREAT/BURST", "SUSTAINED DPS", "OBJECTIVE PRESSURE"]),
 }
 
 CRITERIA_ORDER = ["Difficulty", "Crowd Control", "Mobility", "Utility", "Durability", "Offense"]

@@ -1,46 +1,79 @@
 {% extends "base.html" %}
 {% block title %}Data Hero — SPK MLBB{% endblock %}
-{% block content %}
-<main class="main-content">
-  <div class="page-header">
-    <h1>DATA HERO</h1>
-    <p>Database {{ heroes|length }} hero Mobile Legends beserta skor 6 kriteria utama</p>
+{% block body_class %}admin-skin{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block navbar %}
+<nav class="topbar">
+  <a href="/admin" class="tb-brand">
+    <div class="tb-logo">M</div>
+    <div class="tb-brand-text">Draft Pick SPK<small>Admin Panel</small></div>
+  </a>
+  <div class="tb-spacer"></div>
+  <div class="tb-tabs">
+    <a class="tb-tab" href="/admin">Admin Panel</a>
+    <a class="tb-tab active" href="/heroes">Data Hero</a>
+    <a class="tb-tab" href="/ahp">Bobot AHP</a>
+    <a class="tb-tab" href="/">Draft Pick</a>
   </div>
-  <div class="card" style="margin-bottom:1.5rem">
-    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end">
-      <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
-        <label>Cari Hero</label>
-        <input type="search" id="heroSearch" placeholder="Ketik nama hero..." oninput="filterTable()">
-      </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label>Filter Role</label>
-        <div class="role-selector">
-          <button class="role-btn btn-sm active" onclick="setRole(this,'')">Semua</button>
+  <div class="tb-user"><div class="tb-user-avatar">FS</div><div style="display:flex;flex-direction:column;line-height:1.2"><span class="tb-user-name">Firli Satriya</span><span class="tb-user-role">Administrator</span></div></div>
+  <a href="/logout" class="ap-btn ghost small">Keluar</a>
+  <button class="ap-theme-btn" onclick="toggleTheme()" title="Ganti tema">
+    <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8 8 0 0 1-3.37.73 8.15 8.15 0 0 1-8.05-8 8.59 8.59 0 0 1 .25-2 1 1 0 0 0-.32-1.05A1 1 0 0 0 8 2.36 10.14 10.14 0 1 0 22 14.05a1 1 0 0 0-.36-1.05Z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+  </button>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="ap-bg"></div>
+
+<main class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Database</div>
+      <h1 class="page-title">Data Hero</h1>
+    </div>
+    <div class="page-subtitle">Daftar {{ heroes|length }} hero Mobile Legends beserta skor 6 kriteria utama.</div>
+  </div>
+
+  <div class="ap-card">
+    <div class="ap-card-header">
+      <div class="ap-card-title">Daftar Hero <span id="countLabel" style="font-family:'Inter',sans-serif;font-weight:400;color:var(--ap-text-muted);font-size:11px;margin-left:6px;text-transform:none">({{ heroes|length }})</span></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input class="ap-input search" id="heroSearch" placeholder="Cari hero…" oninput="filterTable()" style="width:240px">
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="ap-btn ghost small role-btn active" data-role="" onclick="setRole(this,'')">Semua</button>
           {% for r in roles %}
-          <button class="role-btn btn-sm" onclick="setRole(this,'{{ r }}')">{{ r }}</button>
+          <button class="ap-btn ghost small role-btn" data-role="{{ r }}" onclick="setRole(this,'{{ r }}')">{{ r.split(' ')[0] }}</button>
           {% endfor %}
         </div>
       </div>
     </div>
-  </div>
-  <div class="card">
-    <div class="card-title">&#128100; Daftar Hero <span id="countLabel" style="font-family:Inter;font-weight:400;font-size:.75rem;color:var(--text-secondary);margin-left:auto">{{ heroes|length }} hero</span></div>
-    <div class="results-table-wrapper" style="max-height:70vh">
-      <table class="results-table" id="heroTable">
+    <div class="ap-tbl-wrap">
+      <table class="ap-tbl" id="heroTable">
         <thead><tr>
           <th style="width:60px">ID</th><th>Hero</th><th>Class</th><th>Role</th>
           {% set short = {"Difficulty":"Diff","Crowd Control":"CC","Mobility":"Mob","Utility":"Util","Durability":"Dur","Offense":"Off"} %}
-          {% for c in criteria %}<th style="width:55px;text-align:center">{{ short[c] }}</th>{% endfor %}
+          {% for c in criteria %}<th style="text-align:center">{{ short[c] }}</th>{% endfor %}
         </tr></thead>
         <tbody>
           {% for h in heroes %}
           <tr data-name="{{ h.name|lower }}" data-roles="{{ h.roles|join(',') }}">
-            <td style="font-family:Orbitron;font-size:.72rem;color:var(--text-muted)">{{ h.id }}</td>
-            <td><div style="display:flex;align-items:center;gap:10px">{{ portrait_html(h.name, 'sm') }}<span class="hero-name">{{ h.name }}</span></div></td>
-            <td><span class="hero-class-sm">{{ h.class }}</span></td>
-            <td>{% for r in h.roles %}<span class="role-tag">{{ r }}</span>{% endfor %}</td>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ap-text-dim)">{{ h.id }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="ap-hero-avatar" style="background:{{ hero_color(h.name) }}">
+                  {% if h.image_url %}<img src="{{ h.image_url }}" alt="{{ h.name }}" loading="lazy" onerror="this.remove()">{% endif %}
+                  <span class="initials">{{ hero_initials(h.name) }}</span>
+                </div>
+                <span style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.04em;color:var(--ap-text)">{{ h.name }}</span>
+              </div>
+            </td>
+            <td><span class="ap-badge {{ h.class.split('/')[0].split(',')[0].strip() }}">{{ h.class }}</span></td>
+            <td>{% for r in h.roles %}<span class="ap-role-chip">{{ r }}</span>{% endfor %}</td>
             {% for c in criteria %}
-            <td class="criteria-score">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
+            <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--ap-gold);font-size:12px">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
             {% endfor %}
           </tr>
           {% endfor %}
@@ -50,6 +83,7 @@
   </div>
 </main>
 {% endblock %}
+
 {% block scripts %}
 <script>
 let currentRole = '';
@@ -63,15 +97,17 @@ function filterTable() {
   const q = document.getElementById('heroSearch').value.toLowerCase();
   let count = 0;
   document.querySelectorAll('#heroTable tbody tr').forEach(tr => {
-    const name = tr.dataset.name;
-    const roles = tr.dataset.roles;
-    const matchName = name.includes(q);
-    const matchRole = !currentRole || roles.includes(currentRole);
+    const matchName = tr.dataset.name.includes(q);
+    const matchRole = !currentRole || tr.dataset.roles.includes(currentRole);
     const show = matchName && matchRole;
     tr.style.display = show ? '' : 'none';
     if (show) count++;
   });
-  document.getElementById('countLabel').textContent = count + ' hero';
+  document.getElementById('countLabel').textContent = '(' + count + ')';
 }
+/* Style role-btn active state with admin-skin tokens */
+const css = document.createElement('style');
+css.textContent = '.admin-skin .role-btn.active{background:var(--ap-bg-pill);border-color:var(--ap-gold);color:var(--ap-gold)}';
+document.head.appendChild(css);
 </script>
 {% endblock %}

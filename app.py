@@ -2,13 +2,23 @@
 SPK Draft Pick MLBB — AHP-SAW
 Flask Application
 """
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from markupsafe import Markup
 from urllib.parse import quote
 import os, csv, math, re
 
+import db as dbmod
+from db import Hero, HeroScore, AHPMatrix, get_session, init_db, db_has_data, DB_ENABLED
+import cloud
+
 app = Flask(__name__)
-app.secret_key = "spk-mlbb-secret-key-2026"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "spk-mlbb-secret-key-2026")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,7 +38,7 @@ CRITERIA_FILES = {
     "Mobility": ("AHP-SAW - MOBILITY.csv", ["DASH/BLINK", "ROTATION SPEED", "ESCAPE CAPABILITY", "FLEXIBILITY"]),
     "Utility": ("AHP-SAW - UTILITY.csv", ["TEAM SUPPORT", "ZONING / CONTROL", "DISRUPTION", "PROTECTION"]),
     "Durability": ("AHP-SAW - DURABILITY.csv", ["BASE TANKINESS", "SUSTAIN/REGEN", "DAMAGE MITIGATION", "SURVIVAL TOOLS"]),
-    "Offense": ("AHP-SAW - OFFENSE.csv", ["DAMAGE", "KILL THREAT/BURST", "POSITIONING REQUIREMENT", "DECISION COMPLEXITY"]),
+    "Offense": ("AHP-SAW - OFFENSE.csv", ["DAMAGE", "KILL THREAT/BURST", "SUSTAINED DPS", "OBJECTIVE PRESSURE"]),
 }
 
 # ============================================================
@@ -40,7 +50,8 @@ def load_heroes():
         for row in csv.DictReader(f):
             heroes.append({"id": row["ID_HERO"].strip(), "name": row["NAMA_HERO"].strip(),
                            "class": row["CLASS"].strip(),
-                           "roles": [r.strip().upper() for r in row["ROLE"].split(",") if r.strip()]})
+                           "roles": [r.strip().upper() for r in row["ROLE"].split(",") if r.strip()],
+                           "image_url": None, "image_public_id": None})
     return heroes
 
 def load_scores():
@@ -157,11 +168,94 @@ def next_hero_id():
     n = (max(nums) + 1) if nums else 1
     return f"H{n:03d}"
 
+# ============================================================
+# DB-BACKED LOADERS (fallback to CSV when DB not configured)
+# ============================================================
+def load_heroes_from_db():
+    """Returns (heroes_list, scores_dict). Both empty if DB not available."""
+    s = get_session()
+    if s is None:
+        return [], {}
+    try:
+        heroes, scores = [], {}
+        for h in s.query(Hero).order_by(Hero.id).all():
+            d = h.to_dict()
+            heroes.append({"id": d["id"], "name": d["name"], "class": d["class"],
+                           "roles": d["roles"], "image_url": d["image_url"],
+                           "image_public_id": d["image_public_id"]})
+            scores[d["id"]] = d["scores"]
+        return heroes, scores
+    finally:
+        s.close()
+
+def load_ahp_from_db():
+    """Returns matrices dict {role: [m1, m2, m3]} from DB, or empty dict."""
+    s = get_session()
+    if s is None:
+        return {}
+    try:
+        out = {r: [] for r in ROLES}
+        rows = s.query(AHPMatrix).order_by(AHPMatrix.role, AHPMatrix.evaluator_idx).all()
+        for r in rows:
+            if r.role in out:
+                while len(out[r.role]) <= r.evaluator_idx:
+                    out[r.role].append(None)
+                out[r.role][r.evaluator_idx] = r.matrix
+        # drop Nones
+        return {role: [m for m in mats if m] for role, mats in out.items()}
+    finally:
+        s.close()
+
+def seed_db_from_csv():
+    """One-shot seed when DB is empty. Mirrors migrate.py but in-process."""
+    if not DB_ENABLED:
+        return
+    if db_has_data():
+        return
+    print("[db] DB empty, seeding from CSV...")
+    init_db()
+    s = get_session()
+    try:
+        csv_heroes = load_heroes()
+        csv_scores = load_scores()
+        csv_mats = load_ahp_matrices()
+        for h in csv_heroes:
+            s.add(Hero(id=h["id"], name=h["name"], hero_class=h["class"], roles=h["roles"]))
+            for c in CRITERIA_ORDER:
+                v = float(csv_scores.get(h["id"], {}).get(c, 0))
+                s.add(HeroScore(hero_id=h["id"], criterion=c, value=v))
+        for role in ROLES:
+            for idx, m in enumerate(csv_mats.get(role, [])):
+                s.add(AHPMatrix(role=role, evaluator_idx=idx, matrix=m))
+        s.commit()
+        print(f"[db] Seeded {len(csv_heroes)} heroes.")
+    except Exception as e:
+        s.rollback()
+        print(f"[db] Seed failed: {e}")
+    finally:
+        s.close()
+
 # Load data at startup
-HEROES = load_heroes()
-SCORES = load_scores()
-AHP_MATS = load_ahp_matrices()
-# Pad any role with fewer than 3 matrices using identity-ish fallback (shouldn't happen with real data)
+if DB_ENABLED:
+    try:
+        init_db()
+        seed_db_from_csv()
+        HEROES, SCORES = load_heroes_from_db()
+        db_mats = load_ahp_from_db()
+        AHP_MATS = {r: db_mats.get(r, []) for r in ROLES}
+        if not HEROES:  # DB connection failed silently — fall back to CSV
+            raise RuntimeError("DB returned empty heroes")
+    except Exception as e:
+        print(f"[db] DB unavailable ({e}). Falling back to CSV-only mode.")
+        HEROES = load_heroes()
+        SCORES = load_scores()
+        AHP_MATS = load_ahp_matrices()
+else:
+    HEROES = load_heroes()
+    SCORES = load_scores()
+    AHP_MATS = load_ahp_matrices()
+
+# Pad any role with fewer than 3 matrices using identity-ish fallback
 for r in ROLES:
     while len(AHP_MATS[r]) < 3:
         AHP_MATS[r].append([[1.0]*6 for _ in range(6)])
@@ -171,6 +265,68 @@ for role in ROLES:
 
 for h in HEROES:
     h["scores"] = SCORES.get(h["id"], {})
+
+# ============================================================
+# DB PERSISTENCE HELPERS
+# ============================================================
+def db_upsert_hero(hero_dict, scores_dict, image_url=None, image_public_id=None):
+    """hero_dict: {id, name, class, roles}.  scores_dict: {criterion: value}."""
+    s = get_session()
+    if s is None:
+        return
+    try:
+        h = s.get(Hero, hero_dict["id"])
+        if h is None:
+            h = Hero(id=hero_dict["id"])
+            s.add(h)
+        h.name = hero_dict["name"]
+        h.hero_class = hero_dict["class"]
+        h.roles = hero_dict["roles"]
+        if image_url is not None:
+            h.image_url = image_url
+        if image_public_id is not None:
+            h.image_public_id = image_public_id
+        for c, v in scores_dict.items():
+            row = (s.query(HeroScore).filter_by(hero_id=hero_dict["id"], criterion=c).one_or_none())
+            if row:
+                row.value = float(v)
+            else:
+                s.add(HeroScore(hero_id=hero_dict["id"], criterion=c, value=float(v)))
+        s.commit()
+    except Exception as e:
+        s.rollback(); print(f"db_upsert_hero error: {e}")
+    finally:
+        s.close()
+
+def db_delete_hero(hero_id):
+    s = get_session()
+    if s is None:
+        return
+    try:
+        h = s.get(Hero, hero_id)
+        if h:
+            s.delete(h)
+            s.commit()
+    except Exception as e:
+        s.rollback(); print(f"db_delete_hero error: {e}")
+    finally:
+        s.close()
+
+def db_upsert_matrix(role, idx, matrix):
+    s = get_session()
+    if s is None:
+        return
+    try:
+        row = s.query(AHPMatrix).filter_by(role=role, evaluator_idx=idx).one_or_none()
+        if row:
+            row.matrix = matrix
+        else:
+            s.add(AHPMatrix(role=role, evaluator_idx=idx, matrix=matrix))
+        s.commit()
+    except Exception as e:
+        s.rollback(); print(f"db_upsert_matrix error: {e}")
+    finally:
+        s.close()
 
 # ============================================================
 # HERO AVATAR / PORTRAIT HELPERS (exposed to Jinja)
@@ -190,9 +346,18 @@ def hero_initials(name):
         return (words[0][0] + words[1][0]).upper()
     return (words[0] if words else str(name))[:2].upper()
 
-def portrait_html(name, size=""):
+def portrait_html(name, size="", image_url=None):
+    """Render hero avatar. If image_url provided (Cloudinary), use it; else fall back to
+    a colored initial + DiceBear cartoon placeholder."""
     bg = hero_color(name)
     init = hero_initials(name)
+    if image_url:
+        return Markup(
+            f'<div class="hero-avatar {size}" style="background:{bg}">'
+            f'<span class="initials">{init}</span>'
+            f'<img src="{image_url}" alt="{name}" loading="lazy" onerror="this.remove()">'
+            f'</div>'
+        )
     seed = quote(str(name))
     src = f"https://api.dicebear.com/7.x/adventurer-neutral/svg?seed={seed}"
     return Markup(
@@ -269,12 +434,15 @@ def create_hero():
             "name": (data.get("name") or "Unnamed").strip(),
             "class": (data.get("class") or "Fighter").strip(),
             "roles": [r.upper() for r in roles] or ["JUNGLING"],
+            "image_url": (data.get("image_url") or "").strip() or None,
+            "image_public_id": None,
             "scores": {}}
     for c in CRITERIA_ORDER:
         v = float(data.get(c, 2.5) or 2.5)
         hero["scores"][c] = v
     HEROES.append(hero)
     SCORES[new_id] = dict(hero["scores"])
+    db_upsert_hero(hero, hero["scores"], image_url=hero["image_url"])
     return jsonify({"ok": True, "hero": hero})
 
 @app.route("/admin/update_hero", methods=["POST"])
@@ -292,10 +460,13 @@ def update_hero():
                 if isinstance(rs, str):
                     rs = [r.strip().upper() for r in rs.split(",") if r.strip()]
                 h["roles"] = [r.upper() for r in rs]
+            if "image_url" in data:
+                h["image_url"] = (data.get("image_url") or "").strip() or None
             for c in CRITERIA_ORDER:
                 if c in data and data[c] != "":
                     h["scores"][c] = float(data[c])
                     SCORES.setdefault(hid, {})[c] = float(data[c])
+            db_upsert_hero(h, h["scores"], image_url=h.get("image_url"))
             return jsonify({"ok": True, "hero": h})
     return jsonify({"error": "not_found"}), 404
 
@@ -306,10 +477,55 @@ def delete_hero():
     hid = (request.get_json() or {}).get("id")
     for i, h in enumerate(HEROES):
         if h["id"] == hid:
+            # Best-effort image cleanup before DB cascade-delete
+            if cloud.CLOUD_ENABLED and h.get("image_public_id"):
+                cloud.delete_hero_image(h["image_public_id"])
             HEROES.pop(i)
             SCORES.pop(hid, None)
+            db_delete_hero(hid)
             return jsonify({"ok": True})
     return jsonify({"error": "not_found"}), 404
+
+@app.route("/admin/upload_hero_image", methods=["POST"])
+def upload_hero_image():
+    """Multipart POST: form field 'image' (file) + 'id' (hero id).
+       Uploads to Cloudinary, persists URL on hero row."""
+    if not session.get("admin"):
+        return jsonify({"error": "unauthorized"}), 401
+    if not cloud.CLOUD_ENABLED:
+        return jsonify({"error": "cloudinary_not_configured"}), 503
+    hid = request.form.get("id")
+    f = request.files.get("image")
+    if not hid or not f:
+        return jsonify({"error": "missing_id_or_image"}), 400
+    hero = next((h for h in HEROES if h["id"] == hid), None)
+    if not hero:
+        return jsonify({"error": "hero_not_found"}), 404
+    try:
+        url, public_id = cloud.upload_hero_image(f, hid)
+    except Exception as e:
+        return jsonify({"error": f"upload_failed: {e}"}), 500
+    if not url:
+        return jsonify({"error": "upload_failed"}), 500
+    hero["image_url"] = url
+    hero["image_public_id"] = public_id
+    db_upsert_hero(hero, hero.get("scores", {}), image_url=url, image_public_id=public_id)
+    return jsonify({"ok": True, "image_url": url, "image_public_id": public_id})
+
+@app.route("/admin/delete_hero_image", methods=["POST"])
+def delete_hero_image():
+    if not session.get("admin"):
+        return jsonify({"error": "unauthorized"}), 401
+    hid = (request.get_json() or {}).get("id")
+    hero = next((h for h in HEROES if h["id"] == hid), None)
+    if not hero:
+        return jsonify({"error": "hero_not_found"}), 404
+    if cloud.CLOUD_ENABLED and hero.get("image_public_id"):
+        cloud.delete_hero_image(hero["image_public_id"])
+    hero["image_url"] = None
+    hero["image_public_id"] = None
+    db_upsert_hero(hero, hero.get("scores", {}), image_url=None, image_public_id=None)
+    return jsonify({"ok": True})
 
 # --- AHP Matrix update ---
 @app.route("/admin/update_ahp", methods=["POST"])
@@ -338,6 +554,7 @@ def update_ahp():
             parsed[j][i] = 1.0 / parsed[i][j] if parsed[i][j] else 1.0
     AHP_MATS[role][idx] = parsed
     recompute_role(role)
+    db_upsert_matrix(role, idx, parsed)
     return jsonify({"ok": True, "ahp": AHP_RESULTS[role]})
 
 # --- API recommend ---

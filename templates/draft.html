@@ -374,9 +374,20 @@
 
   // Image source chain — all real MLBB Fandom wiki artwork variants.
   // If every variant 404s the <img> is hidden so the gradient + initials show through (still MLBB-themed).
-  function imgTag(name) {
-    if (!name) return '';
-    if (_imgCache[name]) return _imgCache[name];
+  // Helper: produce <img> tag. Accepts hero object OR plain name (back-compat).
+  // Priority: Cloudinary image_url (stored in DB) > Fandom wiki guesses > letter fallback.
+  function imgTag(heroOrName) {
+    if (!heroOrName) return '';
+    const hero = (typeof heroOrName === 'string') ? null : heroOrName;
+    const name = hero ? hero.name : heroOrName;
+    const cacheKey = (hero && hero.image_url) ? ('U:' + hero.image_url) : ('N:' + name);
+    if (_imgCache[cacheKey]) return _imgCache[cacheKey];
+    if (hero && hero.image_url) {
+      const html = '<img class="hero-img" src="' + hero.image_url +
+        '" alt="" loading="lazy" referrerpolicy="no-referrer" ' +
+        'onerror="this.style.display=&quot;none&quot;">';
+      return _imgCache[cacheKey] = html;
+    }
     const enc = encodeURIComponent(heroSlug(name));
     const base = 'https://mobile-legends.fandom.com/wiki/Special:FilePath/';
     const url1 = base + 'Hero_' + enc + '.png';
@@ -391,7 +402,7 @@
         'else if(this.dataset.f2){this.src=this.dataset.f2;this.dataset.f2=&quot;&quot;}' +
         'else if(this.dataset.f3){this.src=this.dataset.f3;this.dataset.f3=&quot;&quot;}' +
         'else{this.style.display=&quot;none&quot;}">';
-    return _imgCache[name] = html;
+    return _imgCache[cacheKey] = html;
   }
 
   function heroInitials(name) {
@@ -678,7 +689,7 @@
       if (b) {
         return '<div class="v2-ban-tile filled" style="background:' + heroGradient(b.hero.id, b.hero.class) +
           '" title="' + b.hero.name + '">' +
-          imgTag(b.hero.name) +
+          imgTag(b.hero) +
           '<span class="hero-fallback">' + heroInitials(b.hero.name) + '</span>' +
           '</div>';
       }
@@ -692,7 +703,7 @@
       if (p) {
         return '<div class="v2-pick-slot ' + team + '">' +
           '<div class="v2-slot-portrait" style="background:' + heroGradient(p.hero.id, p.hero.class) + '">' +
-          imgTag(p.hero.name) +
+          imgTag(p.hero) +
           '<div class="v2-slot-letter">' + heroInitials(p.hero.name) + '</div>' +
           '</div>' +
           '<div class="v2-slot-body">' +
@@ -751,7 +762,7 @@
       return '<div class="v2-pool-tile ' + (isDisabled ? 'disabled' : '') + ' ' + (isRec ? 'recommended' : '') +
         '" style="background:' + heroGradient(h.id, h.class) + '" ' + onClk +
         ' title="' + h.name + ' · ' + h.class + '">' +
-        imgTag(h.name) +
+        imgTag(h) +
         '<div class="letter">' + heroInitials(h.name) + '</div>' +
         rank +
         '<div class="role-pip">' + rolePip + '</div>' +
@@ -800,7 +811,7 @@
             const rankCls = i === 0 ? '' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
             return '<div class="v2-rec-card" onclick="pickFromRecs(\'' + r.id + '\')">' +
               '<div class="rec-portrait" style="background:' + heroGradient(r.id, r.class) + '">' +
-              imgTag(r.name) +
+              imgTag(r) +
               '<span class="hero-fallback">' + heroInitials(r.name) + '</span>' +
               '<div class="rec-rank ' + rankCls + '">' + (i + 1) + '</div>' +
               '</div>' +
@@ -847,14 +858,14 @@
   function renderFinish() {
     const finishBan = b =>
       '<div class="v2-finish-ban" style="background:' + heroGradient(b.hero.id, b.hero.class) + '" title="' + b.hero.name + '">' +
-      imgTag(b.hero.name) +
+      imgTag(b.hero) +
       '<span class="hero-fallback">' + heroInitials(b.hero.name) + '</span>' +
       '<div class="strike"></div>' +
       '</div>';
     const finishPick = p =>
       '<div class="v2-finish-pick-row">' +
       '<div class="finish-portrait" style="background:' + heroGradient(p.hero.id, p.hero.class) + '">' +
-      imgTag(p.hero.name) +
+      imgTag(p.hero) +
       '<span class="hero-fallback">' + heroInitials(p.hero.name) + '</span>' +
       '</div>' +
       '<div class="finish-info">' +

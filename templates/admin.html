@@ -1,56 +1,121 @@
 {% extends "base.html" %}
 {% block title %}Admin Panel — SPK MLBB{% endblock %}
-{% block content %}
-<main class="main-content">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap">
-    <div>
-      <h1 style="font-family:Orbitron;font-size:1.4rem;font-weight:800;color:var(--accent-gold);letter-spacing:2.5px">ADMIN PANEL</h1>
-      <p style="color:var(--text-muted);font-size:.78rem;margin-top:2px">Kelola data hero, bobot AHP, dan lihat statistik sistem</p>
+{% block body_class %}admin-skin{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block navbar %}
+<nav class="topbar">
+  <a href="/admin" class="tb-brand">
+    <div class="tb-logo">M</div>
+    <div class="tb-brand-text">
+      Draft Pick SPK
+      <small>Admin Panel</small>
+    </div>
+  </a>
+
+  <div class="tb-spacer"></div>
+
+  <div class="tb-tabs" id="adminTabs">
+    <button class="tb-tab active" data-tab="heroes" onclick="showTab(this,'heroes')">Data Hero</button>
+    <button class="tb-tab" data-tab="ahp" onclick="showTab(this,'ahp')">Bobot AHP</button>
+    <button class="tb-tab" data-tab="stats" onclick="showTab(this,'stats')">Statistik</button>
+  </div>
+
+  <div class="tb-user" title="Administrator">
+    <div class="tb-user-avatar">FS</div>
+    <div style="display:flex;flex-direction:column;line-height:1.2">
+      <span class="tb-user-name">Firli Satriya</span>
+      <span class="tb-user-role">Administrator</span>
     </div>
   </div>
 
-  <!-- Tabs -->
-  <div style="display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap">
-    <button class="role-btn active" data-tab="heroes" onclick="showTab(this,'heroes')">Data Hero</button>
-    <button class="role-btn" data-tab="ahp" onclick="showTab(this,'ahp')">Bobot AHP</button>
-    <button class="role-btn" data-tab="stats" onclick="showTab(this,'stats')">Statistik</button>
+  <a href="/logout" class="ap-btn ghost small" title="Keluar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" x2="9" y1="12" y2="12"/>
+    </svg>
+    Keluar
+  </a>
+
+  <button class="ap-theme-btn" onclick="toggleTheme()" title="Ganti tema">
+    <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+      <path d="M21.64 13a1 1 0 0 0-1.05-.14 8 8 0 0 1-3.37.73 8.15 8.15 0 0 1-8.05-8 8.59 8.59 0 0 1 .25-2 1 1 0 0 0-.32-1.05A1 1 0 0 0 8 2.36 10.14 10.14 0 1 0 22 14.05a1 1 0 0 0-.36-1.05Z"/>
+    </svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2"/><path d="M12 20v2"/>
+      <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+      <path d="M2 12h2"/><path d="M20 12h2"/>
+      <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+    </svg>
+  </button>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="ap-bg"></div>
+
+<main class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Admin Panel</div>
+      <h1 class="page-title">Kelola SPK Draft Pick</h1>
+    </div>
+    <div class="page-subtitle">
+      Kelola hero, kriteria AHP, dan lihat statistik sistem pendukung keputusan.
+    </div>
   </div>
 
-  <!-- =========================================== -->
-  <!-- TAB 1: DATA HERO (CRUD)                     -->
-  <!-- =========================================== -->
+  <!-- ====================================
+       TAB 1: DATA HERO (CRUD)
+       ==================================== -->
   <div class="admin-tab" id="tab-heroes">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.85rem">
-        <div class="card-title" style="margin:0">Data Hero <span id="heroCount" style="font-family:Inter;font-weight:400;color:var(--text-muted);font-size:.7rem;letter-spacing:.5px">({{ heroes|length }})</span></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input type="search" id="adminSearch" placeholder="Cari hero..." oninput="adminFilter()" style="max-width:240px">
-          <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ TAMBAH HERO</button>
+    <div class="ap-card">
+      <div class="ap-card-header">
+        <div class="ap-card-title">Data Hero <span id="heroCount" style="font-family:'Inter',sans-serif;font-weight:400;color:var(--ap-text-muted);font-size:11px;letter-spacing:.04em;margin-left:6px;text-transform:none">({{ heroes|length }})</span></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input class="ap-input search" id="adminSearch" placeholder="Cari hero…" oninput="adminFilter()" style="width:240px">
+          <button class="ap-btn primary" onclick="openCreateModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Tambah Hero
+          </button>
         </div>
       </div>
-      <div class="results-table-wrapper" style="max-height:65vh">
-        <table class="results-table" id="adminTable">
+      <div class="ap-tbl-wrap">
+        <table class="ap-tbl">
           <thead>
             <tr>
-              <th>ID</th><th>Hero</th><th>Class</th><th>Role</th>
+              <th style="width:60px">ID</th>
+              <th>Hero</th>
+              <th>Class</th>
+              <th>Role</th>
               {% set short = {"Difficulty":"Diff","Crowd Control":"CC","Mobility":"Mob","Utility":"Util","Durability":"Dur","Offense":"Off"} %}
               {% for c in criteria %}<th style="text-align:center">{{ short[c] }}</th>{% endfor %}
-              <th>Aksi</th>
+              <th style="width:140px;text-align:right">Aksi</th>
             </tr>
           </thead>
           <tbody id="heroTbody">
             {% for h in heroes %}
             <tr data-id="{{ h.id }}" data-name="{{ h.name|lower }}">
-              <td style="font-family:Orbitron;font-size:.68rem;color:var(--text-muted)">{{ h.id }}</td>
-              <td><div style="display:flex;align-items:center;gap:10px">{{ portrait_html(h.name, 'sm') }}<span class="hero-name">{{ h.name }}</span></div></td>
-              <td><span class="hero-class-sm">{{ h.class }}</span></td>
-              <td>{% for r in h.roles %}<span class="role-tag">{{ r }}</span>{% endfor %}</td>
-              {% for c in criteria %}
-              <td class="criteria-score">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
-              {% endfor %}
+              <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ap-text-dim)">{{ h.id }}</td>
               <td>
-                <button class="btn btn-xs btn-blue" onclick="editHero('{{ h.id }}')">Edit</button>
-                <button class="btn btn-xs btn-danger" onclick="deleteHero('{{ h.id }}','{{ h.name }}')">Hapus</button>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div class="ap-hero-avatar" style="background:{{ hero_color(h.name) }}">
+                    {% if h.image_url %}<img src="{{ h.image_url }}" alt="{{ h.name }}" loading="lazy" onerror="this.remove()">{% endif %}
+                    <span class="initials">{{ hero_initials(h.name) }}</span>
+                  </div>
+                  <span class="hero-name" style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.04em;color:var(--ap-text)">{{ h.name }}</span>
+                </div>
+              </td>
+              <td><span class="ap-badge {{ h.class.split('/')[0].split(',')[0].strip() }}">{{ h.class }}</span></td>
+              <td>{% for r in h.roles %}<span class="ap-role-chip role-tag">{{ r }}</span>{% endfor %}</td>
+              {% for c in criteria %}
+              <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--ap-gold);font-size:12px">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
+              {% endfor %}
+              <td style="text-align:right;white-space:nowrap">
+                <button class="ap-btn ghost small" onclick="editHero('{{ h.id }}')">Edit</button>
+                <button class="ap-btn danger small" onclick="deleteHero('{{ h.id }}','{{ h.name }}')">Hapus</button>
               </td>
             </tr>
             {% endfor %}
@@ -60,88 +125,92 @@
     </div>
   </div>
 
-  <!-- =========================================== -->
-  <!-- TAB 2: BOBOT AHP (matrix editor)            -->
-  <!-- =========================================== -->
+  <!-- ====================================
+       TAB 2: BOBOT AHP (matrix editor)
+       ==================================== -->
   <div class="admin-tab" id="tab-ahp" style="display:none">
-    <div class="card" style="margin-bottom:1rem">
-      <div class="card-title">Tentang Pembobotan AHP</div>
-      <p style="font-size:.82rem;color:var(--text-secondary);line-height:1.6">
-        Pembobotan dilakukan oleh <strong>11 penilai expert</strong>:
-        <strong>1 coach</strong> yang menilai kelima role, dan <strong>10 player</strong>
+    <div class="ap-card" style="margin-bottom:18px">
+      <div class="ap-card-header">
+        <div class="ap-card-title">Tentang Pembobotan AHP</div>
+      </div>
+      <div class="ap-card-body" style="font-size:13px;color:var(--ap-text-muted);line-height:1.65">
+        Pembobotan dilakukan oleh <strong style="color:var(--ap-gold)">11 penilai expert</strong>:
+        <strong style="color:var(--ap-text)">1 coach</strong> yang menilai kelima role, dan <strong style="color:var(--ap-text)">10 player</strong>
         (masing-masing role dinilai oleh 2 player sesuai role mereka).
-        Total terdapat <strong>15 matriks</strong> perbandingan berpasangan ukuran 6×6
+        Total terdapat <strong style="color:var(--ap-gold)">15 matriks</strong> perbandingan berpasangan ukuran 6×6
         (5 role × 3 penilai per role). Setiap matriks dapat diedit di bawah.
         Diagonal dipaksa = 1 dan elemen segitiga bawah otomatis menjadi resiprokal.
-      </p>
+      </div>
     </div>
 
-    <div style="display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap">
+    <div class="tb-tabs" style="margin-bottom:18px;padding:0">
       {% for r in roles %}
-      <button class="role-btn {% if loop.first %}active{% endif %}" onclick="showAhpRole(this,'{{ r }}')">{{ r }}</button>
+      <button class="tb-tab {% if loop.first %}active{% endif %}" onclick="showAhpRole(this,'{{ r }}')">{{ r }}</button>
       {% endfor %}
     </div>
 
+    {% set bar_colors = ["#3FA9F5","#E5B84B","#34D399","#C084FC","#F87171","#FB923C"] %}
     {% for r in roles %}
     <div class="ahp-role-pane" data-role="{{ r }}" {% if not loop.first %}style="display:none"{% endif %}>
-      <div class="card" style="margin-bottom:1rem">
-        <div class="card-title">Bobot Hasil Agregasi — {{ r }}</div>
-        <div class="ahp-stats" style="margin-bottom:1rem">
-          <div class="ahp-stat"><div class="label">Lambda Max</div><div class="value" id="lmax-{{ r|replace(' ','_') }}" style="color:var(--accent-blue)">{{ "%.4f"|format(ahp[r].lambda_max) }}</div></div>
-          <div class="ahp-stat"><div class="label">CI</div><div class="value" id="ci-{{ r|replace(' ','_') }}" style="color:var(--accent-purple)">{{ "%.4f"|format(ahp[r].ci) }}</div></div>
-          <div class="ahp-stat"><div class="label">CR</div><div class="value {{ 'status-consistent' if ahp[r].consistent else 'status-inconsistent' }}" id="cr-{{ r|replace(' ','_') }}">{{ "%.4f"|format(ahp[r].cr) }}</div></div>
-          <div class="ahp-stat"><div class="label">Status</div><div class="value {{ 'status-consistent' if ahp[r].consistent else 'status-inconsistent' }}" id="st-{{ r|replace(' ','_') }}" style="font-size:.95rem">{{ "KONSISTEN" if ahp[r].consistent else "TIDAK KONSISTEN" }}</div></div>
+      <div class="ap-card" style="margin-bottom:18px">
+        <div class="ap-card-header">
+          <div class="ap-card-title">Hasil Agregasi — {{ r }}</div>
+          <span class="ap-status {{ 'good' if ahp[r].consistent else 'bad' }}" id="st-{{ r|replace(' ','_') }}">
+            <span class="dot"></span>{{ "KONSISTEN" if ahp[r].consistent else "TIDAK KONSISTEN" }}
+          </span>
         </div>
-        <div class="weight-bars" id="bars-{{ r|replace(' ','_') }}">
-          {% set bar_classes = ["bar-difficulty","bar-cc","bar-mobility","bar-utility","bar-durability","bar-offense"] %}
-          {% for c in criteria %}
-          {% set w = ahp[r].weights[loop.index0] %}
-          <div class="weight-row">
-            <span class="label">{{ c }}</span>
-            <div class="bar-bg"><div class="bar-fill {{ bar_classes[loop.index0] }}" data-c="{{ loop.index0 }}" style="width:{{ (w*200)|round }}%">{{ "%.2f"|format(w*100) }}%</div></div>
+        <div class="ap-card-body">
+          <div class="ap-stat-grid" style="margin-bottom:18px">
+            <div class="ap-stat-tile" style="--ap-accent:var(--ap-blue)"><div class="ap-stat-label">Lambda Max</div><div class="ap-stat-value" id="lmax-{{ r|replace(' ','_') }}" style="color:var(--ap-blue)">{{ "%.4f"|format(ahp[r].lambda_max) }}</div></div>
+            <div class="ap-stat-tile" style="--ap-accent:var(--ap-purple)"><div class="ap-stat-label">Consistency Index</div><div class="ap-stat-value" id="ci-{{ r|replace(' ','_') }}" style="color:var(--ap-purple)">{{ "%.4f"|format(ahp[r].ci) }}</div></div>
+            <div class="ap-stat-tile" style="--ap-accent:{{ 'var(--ap-green)' if ahp[r].consistent else 'var(--ap-red)' }}"><div class="ap-stat-label">Consistency Ratio</div><div class="ap-stat-value" id="cr-{{ r|replace(' ','_') }}" style="color:{{ 'var(--ap-green)' if ahp[r].consistent else 'var(--ap-red)' }}">{{ "%.4f"|format(ahp[r].cr) }}</div></div>
           </div>
-          {% endfor %}
+          <div id="bars-{{ r|replace(' ','_') }}">
+            {% for c in criteria %}
+            {% set w = ahp[r].weights[loop.index0] %}
+            <div class="ap-weight-row">
+              <div class="ap-weight-label"><span class="ap-weight-dot" style="background:{{ bar_colors[loop.index0] }}"></span>{{ c }}</div>
+              <div class="ap-weight-bar"><div class="ap-weight-fill bar-fill" data-c="{{ loop.index0 }}" style="width:{{ (w*100)|round(2) }}%;background:{{ bar_colors[loop.index0] }}"></div></div>
+              <div class="ap-weight-value">{{ "%.2f"|format(w*100) }}%</div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
       </div>
 
       {% for ev in evaluators %}
       {% set idx = loop.index0 %}
-      <div class="ahp-section">
-        <div class="head">
-          <div>
-            <div class="head-title">{{ r }} — Penilai {{ idx + 1 }}: {{ ev }}</div>
-            <div class="head-sub">Isi nilai pada segitiga atas (i &lt; j). Diagonal &amp; segitiga bawah otomatis.</div>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="saveMatrix('{{ r }}', {{ idx }})">SIMPAN MATRIKS</button>
+      <div class="ap-card" style="margin-bottom:14px">
+        <div class="ap-card-header">
+          <div class="ap-card-title">Penilai {{ idx + 1 }} — {{ ev }}</div>
+          <button class="ap-btn primary small" onclick="saveMatrix('{{ r }}', {{ idx }})">Simpan Matriks</button>
         </div>
-        <div style="overflow-x:auto">
-        <table class="matrix-grid" data-role="{{ r }}" data-idx="{{ idx }}">
-          <thead>
-            <tr>
-              <th></th>
-              {% for c in criteria %}<th>{{ short[c] }}</th>{% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for i in range(6) %}
-            <tr>
-              <th>{{ short[criteria[i]] }}</th>
-              {% for j in range(6) %}
-              {% set val = ahp_mats[r][idx][i][j] %}
-              <td>
+        <div class="ap-card-body" style="overflow-x:auto">
+          <table class="ap-pairwise matrix-grid" data-role="{{ r }}" data-idx="{{ idx }}">
+            <thead>
+              <tr>
+                <th></th>
+                {% for c in criteria %}<th>{{ short[c] }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for i in range(6) %}
+              <tr>
+                <td class="row-label">{{ short[criteria[i]] }}</td>
+                {% for j in range(6) %}
+                {% set val = ahp_mats[r][idx][i][j] %}
                 {% if i == j %}
-                <input class="diag" value="1" readonly>
+                <td class="diag"><input class="pw-input" value="1" readonly></td>
                 {% elif i < j %}
-                <input class="upper" data-i="{{ i }}" data-j="{{ j }}" value="{{ '%.4f'|format(val) }}" oninput="syncReciprocal(this)">
+                <td><input class="pw-input upper" data-i="{{ i }}" data-j="{{ j }}" value="{{ '%.4f'|format(val) }}" oninput="syncReciprocal(this)"></td>
                 {% else %}
-                <input class="lower" data-i="{{ i }}" data-j="{{ j }}" value="{{ '%.4f'|format(val) }}" readonly>
+                <td><input class="pw-input lower" data-i="{{ i }}" data-j="{{ j }}" value="{{ '%.4f'|format(val) }}" readonly></td>
                 {% endif %}
-              </td>
+                {% endfor %}
+              </tr>
               {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
         </div>
       </div>
       {% endfor %}
@@ -149,66 +218,105 @@
     {% endfor %}
   </div>
 
-  <!-- =========================================== -->
-  <!-- TAB 3: STATISTIK                            -->
-  <!-- =========================================== -->
+  <!-- ====================================
+       TAB 3: STATISTIK
+       ==================================== -->
   <div class="admin-tab" id="tab-stats" style="display:none">
-    <div class="card">
-      <div class="card-title">Statistik Sistem</div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="l">Total Hero</div><div class="v">{{ heroes|length }}</div></div>
-        <div class="stat-card"><div class="l">Kriteria</div><div class="v">6</div></div>
-        <div class="stat-card"><div class="l">Role</div><div class="v">5</div></div>
-        <div class="stat-card"><div class="l">Penilai</div><div class="v">11</div></div>
-        <div class="stat-card"><div class="l">Matriks AHP</div><div class="v">15</div></div>
+    <div class="ap-card" style="margin-bottom:18px">
+      <div class="ap-card-header"><div class="ap-card-title">Ringkasan Sistem</div></div>
+      <div class="ap-card-body">
+        <div class="ap-stat-grid">
+          <div class="ap-stat-tile" style="--ap-accent:var(--ap-gold)"><div class="ap-stat-label">Total Hero</div><div class="ap-stat-value">{{ heroes|length }}</div><div class="ap-stat-desc">Hero terdaftar di database</div></div>
+          <div class="ap-stat-tile" style="--ap-accent:var(--ap-blue)"><div class="ap-stat-label">Kriteria</div><div class="ap-stat-value" style="color:var(--ap-blue)">6</div><div class="ap-stat-desc">Difficulty, CC, Mobility, dst.</div></div>
+          <div class="ap-stat-tile" style="--ap-accent:var(--ap-cyan)"><div class="ap-stat-label">Role</div><div class="ap-stat-value" style="color:var(--ap-cyan)">5</div><div class="ap-stat-desc">Jungling, Mid, Exp, Roaming, Gold</div></div>
+          <div class="ap-stat-tile" style="--ap-accent:var(--ap-purple)"><div class="ap-stat-label">Penilai</div><div class="ap-stat-value" style="color:var(--ap-purple)">11</div><div class="ap-stat-desc">1 coach + 10 player</div></div>
+          <div class="ap-stat-tile" style="--ap-accent:var(--ap-green)"><div class="ap-stat-label">Matriks AHP</div><div class="ap-stat-value" style="color:var(--ap-green)">15</div><div class="ap-stat-desc">5 role × 3 penilai</div></div>
+        </div>
       </div>
-      <div class="card-title" style="margin-top:1.5rem">Jumlah Hero per Role</div>
-      <div class="stat-grid">
-        {% for r in roles %}
-        <div class="stat-card"><div class="l">{{ r }}</div><div class="v">{{ role_counts[r] }}</div></div>
-        {% endfor %}
+    </div>
+
+    <div class="ap-card">
+      <div class="ap-card-header"><div class="ap-card-title">Jumlah Hero per Role</div></div>
+      <div class="ap-card-body">
+        <div class="ap-stat-grid">
+          {% for r in roles %}
+          <div class="ap-stat-tile"><div class="ap-stat-label">{{ r }}</div><div class="ap-stat-value">{{ role_counts[r] }}</div></div>
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>
 </main>
 
-<!-- ==================================== -->
-<!-- HERO MODAL (create + edit)           -->
-<!-- ==================================== -->
-<div class="modal-backdrop" id="heroModal">
-  <div class="modal">
-    <h3 id="modalTitle">Edit Hero</h3>
-    <input type="hidden" id="editId">
-    <div class="grid-2">
-      <div class="form-group"><label>Nama Hero</label><input type="text" id="editName" placeholder="Mis. Fanny"></div>
-      <div class="form-group">
-        <label>Class</label>
-        <select id="editClass">
-          {% for c in hero_classes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
-        </select>
-      </div>
+<!-- ====================================
+     HERO MODAL (create + edit)
+     ==================================== -->
+<div class="ap-modal-backdrop" id="heroModal">
+  <div class="ap-modal">
+    <div class="ap-modal-header">
+      <div class="ap-modal-title" id="modalTitle">Edit Hero</div>
+      <button class="ap-modal-close" onclick="closeModal()" title="Tutup">✕</button>
     </div>
-    <div class="form-group">
-      <label>Role (boleh lebih dari satu)</label>
-      <div class="role-checkboxes" id="editRoles">
-        {% for r in roles %}
-        <label class="role-check"><input type="checkbox" value="{{ r }}" onchange="this.parentElement.classList.toggle('checked', this.checked)">{{ r }}</label>
+    <div class="ap-modal-body">
+      <input type="hidden" id="editId">
+
+      <!-- Image upload (only meaningful in Edit mode — we need the hero ID first) -->
+      <div class="ap-field" id="editImageRow" style="margin-bottom:14px;display:flex;align-items:center;gap:14px">
+        <div id="editAvatarPreview" class="ap-hero-avatar" style="width:64px;height:64px;font-size:18px;background:#3a3a3a">
+          <span class="initials">??</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+          <label class="ap-field-label" style="margin:0">Gambar Hero</label>
+          <input type="file" id="editImageFile" accept="image/*" style="font-size:12px;color:var(--ap-text-muted)">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="ap-btn ghost small" id="btnUploadImg" onclick="uploadHeroImage()">Upload</button>
+            <button type="button" class="ap-btn danger small" id="btnRemoveImg" onclick="removeHeroImage()">Hapus Gambar</button>
+            <span id="imgHint" style="font-size:10.5px;color:var(--ap-text-dim);letter-spacing:.04em">Simpan dulu hero baru sebelum upload gambar.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ap-field" style="margin-bottom:14px">
+        <label class="ap-field-label">Nama Hero</label>
+        <input class="ap-input" type="text" id="editName" placeholder="Mis. Fanny">
+      </div>
+      <div class="ap-field" style="margin-bottom:14px">
+        <label class="ap-field-label">Class (boleh lebih dari satu)</label>
+        <div id="editClasses" style="display:flex;flex-wrap:wrap;gap:6px">
+          {% for c in hero_classes %}
+          <label style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--ap-line-soft);border-radius:16px;font-size:11px;letter-spacing:.05em;color:var(--ap-text-muted);cursor:pointer;font-family:'JetBrains Mono',monospace">
+            <input type="checkbox" value="{{ c }}" onchange="this.parentElement.style.borderColor=this.checked?'var(--ap-gold)':'var(--ap-line-soft)';this.parentElement.style.color=this.checked?'var(--ap-gold)':'var(--ap-text-muted)';this.parentElement.style.background=this.checked?'var(--ap-bg-pill)':'transparent';">{{ c }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="ap-field" style="margin-bottom:14px">
+        <label class="ap-field-label">Role (boleh lebih dari satu)</label>
+        <div id="editRoles" style="display:flex;flex-wrap:wrap;gap:6px">
+          {% for r in roles %}
+          <label style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--ap-line-soft);border-radius:16px;font-size:11px;letter-spacing:.05em;color:var(--ap-text-muted);cursor:pointer;font-family:'JetBrains Mono',monospace">
+            <input type="checkbox" value="{{ r }}" onchange="this.parentElement.style.borderColor=this.checked?'var(--ap-gold)':'var(--ap-line-soft)';this.parentElement.style.color=this.checked?'var(--ap-gold)':'var(--ap-text-muted)';this.parentElement.style.background=this.checked?'var(--ap-bg-pill)':'transparent';">{{ r }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        {% for c in criteria %}
+        <div class="ap-field">
+          <label class="ap-field-label">{{ c }} (0 - 5)</label>
+          <input class="ap-input" type="number" step="0.25" min="0" max="5" id="editC{{ loop.index0 }}">
+        </div>
         {% endfor %}
       </div>
     </div>
-    <div class="grid-2">
-      {% for c in criteria %}
-      <div class="form-group"><label>{{ c }} (0 - 5)</label><input type="number" step="0.25" min="0" max="5" id="editC{{ loop.index0 }}"></div>
-      {% endfor %}
-    </div>
-    <div style="display:flex;gap:10px;margin-top:1rem">
-      <button class="btn btn-primary" id="saveBtn" onclick="saveHero()">SIMPAN</button>
-      <button class="btn btn-secondary" onclick="closeModal()">BATAL</button>
+    <div class="ap-modal-footer">
+      <button class="ap-btn ghost" onclick="closeModal()">Batal</button>
+      <button class="ap-btn primary" onclick="saveHero()">Simpan</button>
     </div>
   </div>
 </div>
 
-<div class="toast hidden" id="toast"></div>
+<div id="toast" style="position:fixed;top:80px;right:24px;padding:12px 16px;border-radius:6px;background:var(--ap-bg-card-hi);border:1px solid var(--ap-green);color:var(--ap-green);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;z-index:1000;box-shadow:var(--ap-shadow-card);transition:opacity .3s,transform .3s;opacity:0;transform:translateY(-12px);pointer-events:none"></div>
 {% endblock %}
 
 {% block scripts %}
@@ -218,14 +326,14 @@ const ROLES = {{ roles | tojson }};
 let editingId = null;
 
 function showTab(btn, tab) {
-  document.querySelectorAll('.role-btn[data-tab]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#adminTabs .tb-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
   document.getElementById('tab-' + tab).style.display = '';
 }
 
 function showAhpRole(btn, role) {
-  btn.parentElement.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.parentElement.querySelectorAll('.tb-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.ahp-role-pane').forEach(p => p.style.display = 'none');
   document.querySelector('.ahp-role-pane[data-role="' + role + '"]').style.display = '';
@@ -245,19 +353,51 @@ function adminFilter() {
 function toast(msg, isError) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast' + (isError ? ' error' : '');
-  setTimeout(() => t.classList.add('hidden'), 2500);
+  t.style.borderColor = isError ? 'var(--ap-red)' : 'var(--ap-green)';
+  t.style.color = isError ? 'var(--ap-red)' : 'var(--ap-green)';
+  t.style.opacity = '1';
+  t.style.transform = 'translateY(0)';
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-12px)'; }, 2500);
 }
 
 /* ---------------- HERO CRUD ---------------- */
+// Helper: apply pill (gold/muted) styling to checkbox label
+function _styleCheck(input) {
+  const p = input.parentElement;
+  p.style.borderColor = input.checked ? 'var(--ap-gold)' : 'var(--ap-line-soft)';
+  p.style.color       = input.checked ? 'var(--ap-gold)' : 'var(--ap-text-muted)';
+  p.style.background  = input.checked ? 'var(--ap-bg-pill)' : 'transparent';
+}
+
+function _setAvatarPreview(name, imageUrl) {
+  const av = document.getElementById('editAvatarPreview');
+  if (!av) return;
+  const init = (name || '').split(/\s+/).filter(Boolean).slice(0,2).map(s => s[0]).join('').toUpperCase() || '??';
+  av.innerHTML = (imageUrl
+    ? '<img src="' + imageUrl + '" alt="" onerror="this.remove()">'
+    : '') + '<span class="initials">' + init + '</span>';
+}
+
+function _setUploadEnabled(enabled) {
+  document.getElementById('btnUploadImg').disabled = !enabled;
+  document.getElementById('btnRemoveImg').disabled = !enabled;
+  document.getElementById('editImageFile').disabled = !enabled;
+  document.getElementById('imgHint').textContent = enabled
+    ? 'PNG/JPG/WebP, max ~5MB. Gambar akan di-resize ke 400×400.'
+    : 'Simpan hero baru dulu, lalu upload gambar dari menu Edit.';
+}
+
 function openCreateModal() {
   editingId = null;
   document.getElementById('modalTitle').textContent = 'Tambah Hero Baru';
   document.getElementById('editId').value = '';
   document.getElementById('editName').value = '';
-  document.getElementById('editClass').value = 'Fighter';
-  document.querySelectorAll('#editRoles input').forEach(i => { i.checked = false; i.parentElement.classList.remove('checked'); });
+  document.querySelectorAll('#editClasses input').forEach(i => { i.checked = false; _styleCheck(i); });
+  document.querySelectorAll('#editRoles input').forEach(i => { i.checked = false; _styleCheck(i); });
   for (let i = 0; i < 6; i++) document.getElementById('editC' + i).value = '2.5';
+  _setAvatarPreview('', '');
+  _setUploadEnabled(false);
+  document.getElementById('editImageFile').value = '';
   document.getElementById('heroModal').classList.add('show');
 }
 
@@ -268,11 +408,21 @@ function editHero(id) {
   const tr = document.querySelector('#heroTbody tr[data-id="' + id + '"]');
   const tds = tr.querySelectorAll('td');
   document.getElementById('editName').value = tr.querySelector('.hero-name').innerText.trim();
-  document.getElementById('editClass').value = tds[2].innerText.trim();
-  const roleTags = [...tds[3].querySelectorAll('.role-tag')].map(t => t.textContent.trim());
+  const avatarImg = tr.querySelector('.ap-hero-avatar img');
+  _setAvatarPreview(tr.querySelector('.hero-name').innerText.trim(), avatarImg ? avatarImg.src : '');
+  _setUploadEnabled(true);
+  document.getElementById('editImageFile').value = '';
+  // Multi-class — split by "/" or ","
+  const classText = tds[2].innerText.trim();
+  const classes = classText.split(/[\/,]/).map(s => s.trim()).filter(Boolean);
+  document.querySelectorAll('#editClasses input').forEach(i => {
+    i.checked = classes.includes(i.value);
+    _styleCheck(i);
+  });
+  const roleTags = [...tds[3].querySelectorAll('.ap-role-chip')].map(t => t.textContent.trim());
   document.querySelectorAll('#editRoles input').forEach(i => {
     i.checked = roleTags.includes(i.value);
-    i.parentElement.classList.toggle('checked', i.checked);
+    _styleCheck(i);
   });
   for (let i = 0; i < 6; i++) {
     document.getElementById('editC' + i).value = tds[4 + i].innerText.trim();
@@ -283,13 +433,15 @@ function editHero(id) {
 function closeModal() { document.getElementById('heroModal').classList.remove('show'); }
 
 function saveHero() {
-  const checks = [...document.querySelectorAll('#editRoles input:checked')].map(i => i.value);
+  const roleChecks  = [...document.querySelectorAll('#editRoles input:checked')].map(i => i.value);
+  const classChecks = [...document.querySelectorAll('#editClasses input:checked')].map(i => i.value);
   if (!document.getElementById('editName').value.trim()) { toast('Nama hero wajib diisi', true); return; }
-  if (checks.length === 0) { toast('Pilih minimal 1 role', true); return; }
+  if (classChecks.length === 0) { toast('Pilih minimal 1 class', true); return; }
+  if (roleChecks.length === 0) { toast('Pilih minimal 1 role', true); return; }
   const data = {
     name: document.getElementById('editName').value.trim(),
-    class: document.getElementById('editClass').value,
-    roles: checks
+    class: classChecks.join('/'),
+    roles: roleChecks
   };
   CRITERIA.forEach((c, i) => { data[c] = parseFloat(document.getElementById('editC' + i).value) || 0; });
   if (editingId) data.id = editingId;
@@ -302,6 +454,57 @@ function saveHero() {
         closeModal();
         setTimeout(() => location.reload(), 600);
       } else { toast(res.error || 'Gagal menyimpan', true); }
+    })
+    .catch(() => toast('Gagal terhubung server', true));
+}
+
+function uploadHeroImage() {
+  if (!editingId) { toast('Simpan hero baru terlebih dahulu', true); return; }
+  const f = document.getElementById('editImageFile').files[0];
+  if (!f) { toast('Pilih file gambar dulu', true); return; }
+  if (f.size > 5 * 1024 * 1024) { toast('Ukuran maks 5MB', true); return; }
+  const fd = new FormData();
+  fd.append('id', editingId);
+  fd.append('image', f);
+  document.getElementById('btnUploadImg').disabled = true;
+  fetch('/admin/upload_hero_image', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(res => {
+      if (res.ok) {
+        toast('Gambar diunggah');
+        _setAvatarPreview(document.getElementById('editName').value, res.image_url);
+        // Update the row avatar in the table too
+        const tr = document.querySelector('#heroTbody tr[data-id="' + editingId + '"]');
+        if (tr) {
+          const av = tr.querySelector('.ap-hero-avatar');
+          if (av) {
+            const oldImg = av.querySelector('img'); if (oldImg) oldImg.remove();
+            const img = document.createElement('img');
+            img.src = res.image_url; img.alt = ''; img.loading = 'lazy';
+            img.onerror = function(){ this.remove(); };
+            av.prepend(img);
+          }
+        }
+      } else { toast(res.error || 'Upload gagal', true); }
+    })
+    .catch(() => toast('Gagal terhubung server', true))
+    .finally(() => { document.getElementById('btnUploadImg').disabled = false; });
+}
+
+function removeHeroImage() {
+  if (!editingId) return;
+  if (!confirm('Hapus gambar hero ini?')) return;
+  fetch('/admin/delete_hero_image', { method: 'POST', headers: {'Content-Type':'application/json'},
+                                       body: JSON.stringify({ id: editingId }) })
+    .then(r => r.json())
+    .then(res => {
+      if (res.ok) {
+        toast('Gambar dihapus');
+        _setAvatarPreview(document.getElementById('editName').value, '');
+        const tr = document.querySelector('#heroTbody tr[data-id="' + editingId + '"]');
+        const img = tr && tr.querySelector('.ap-hero-avatar img');
+        if (img) img.remove();
+      } else { toast(res.error || 'Gagal menghapus', true); }
     })
     .catch(() => toast('Gagal terhubung server', true));
 }
@@ -366,17 +569,15 @@ function applyAhpResult(role, a) {
   const crEl = document.getElementById('cr-' + key);
   const stEl = document.getElementById('st-' + key);
   crEl.textContent = a.cr.toFixed(4);
-  crEl.classList.toggle('status-consistent', a.consistent);
-  crEl.classList.toggle('status-inconsistent', !a.consistent);
-  stEl.textContent = a.consistent ? 'KONSISTEN' : 'TIDAK KONSISTEN';
-  stEl.classList.toggle('status-consistent', a.consistent);
-  stEl.classList.toggle('status-inconsistent', !a.consistent);
+  crEl.style.color = a.consistent ? 'var(--ap-green)' : 'var(--ap-red)';
+  stEl.classList.toggle('good', a.consistent);
+  stEl.classList.toggle('bad', !a.consistent);
+  stEl.innerHTML = '<span class="dot"></span>' + (a.consistent ? 'KONSISTEN' : 'TIDAK KONSISTEN');
   const bars = document.getElementById('bars-' + key);
   bars.querySelectorAll('.bar-fill').forEach(b => {
     const c = +b.dataset.c;
     const w = a.weights[c];
-    b.style.width = Math.round(w * 200) + '%';
-    b.textContent = (w * 100).toFixed(2) + '%';
+    b.style.width = (w * 100).toFixed(2) + '%';
   });
 }
 

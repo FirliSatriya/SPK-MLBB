@@ -101,8 +101,8 @@
               <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ap-text-dim)">{{ h.id }}</td>
               <td>
                 <div style="display:flex;align-items:center;gap:12px">
-                  <div class="ap-hero-avatar" style="background:{{ hero_color(h.name) }}">
-                    {% if h.image_url %}<img src="{{ h.image_url }}" alt="{{ h.name }}" loading="lazy" onerror="this.remove()">{% endif %}
+                  <div class="ap-hero-avatar" data-hero-name="{{ h.name }}" style="background:{{ hero_color(h.name) }}">
+                    {% if h.image_url %}<img src="{{ h.image_url }}" alt="{{ h.name }}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">{% endif %}
                     <span class="initials">{{ hero_initials(h.name) }}</span>
                   </div>
                   <span class="hero-name" style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.04em;color:var(--ap-text)">{{ h.name }}</span>
@@ -204,7 +204,7 @@
                 {% elif i < j %}
                 <td><input class="pw-input upper" data-i="{{ i }}" data-j="{{ j }}" value="{{ '%.4f'|format(val) }}" oninput="syncReciprocal(this)"></td>
                 {% else %}
-                <td><input class="pw-input lower" data-i="{{ i }}" data-j="{{ j }}" value="{{ '%.4f'|format(val) }}" readonly></td>
+                <td><input class="pw-input lower" data-i="{{ i }}" data-j="{{ j }}" value="{{ '%.4f'|format(val) }}" oninput="syncReciprocal(this)"></td>
                 {% endif %}
                 {% endfor %}
               </tr>
@@ -379,12 +379,15 @@ function _setAvatarPreview(name, imageUrl) {
 }
 
 function _setUploadEnabled(enabled) {
+  // enabled=true → Edit mode (hero already has ID): tombol Upload/Hapus aktif untuk re-upload manual.
+  // enabled=false → Create mode: file picker tetap aktif (akan auto-upload setelah Simpan),
+  //                 tapi tombol Upload/Hapus manual dimatikan karena hero ID belum ada.
   document.getElementById('btnUploadImg').disabled = !enabled;
   document.getElementById('btnRemoveImg').disabled = !enabled;
-  document.getElementById('editImageFile').disabled = !enabled;
+  document.getElementById('editImageFile').disabled = false;
   document.getElementById('imgHint').textContent = enabled
     ? 'PNG/JPG/WebP, max ~5MB. Gambar akan di-resize ke 400×400.'
-    : 'Simpan hero baru dulu, lalu upload gambar dari menu Edit.';
+    : 'Pilih gambar di sini — akan otomatis ter-upload setelah klik Simpan.';
 }
 
 function openCreateModal() {
@@ -446,14 +449,38 @@ function saveHero() {
   CRITERIA.forEach((c, i) => { data[c] = parseFloat(document.getElementById('editC' + i).value) || 0; });
   if (editingId) data.id = editingId;
   const url = editingId ? '/admin/update_hero' : '/admin/create_hero';
+  const stagedFile = document.getElementById('editImageFile').files[0] || null;
   fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
     .then(r => r.json())
     .then(res => {
-      if (res.ok) {
+      if (!res.ok) { toast(res.error || 'Gagal menyimpan', true); return null; }
+      // Tentukan ID hero (untuk create, ambil dari response server)
+      const newId = editingId || (res.hero && res.hero.id);
+      // Kalau user sudah memilih file gambar saat create, langsung upload pakai ID baru
+      if (!editingId && stagedFile && newId) {
+        if (stagedFile.size > 5 * 1024 * 1024) {
+          toast('Hero tersimpan, tapi gambar > 5MB tidak diupload', true);
+          return res;
+        }
+        const fd = new FormData();
+        fd.append('id', newId);
+        fd.append('image', stagedFile);
+        return fetch('/admin/upload_hero_image', { method: 'POST', body: fd })
+          .then(r => r.json())
+          .then(up => {
+            if (!up.ok) toast('Hero tersimpan, tapi upload gambar gagal: ' + (up.error || ''), true);
+            return res;
+          })
+          .catch(() => { toast('Hero tersimpan, tapi upload gambar gagal (jaringan)', true); return res; });
+      }
+      return res;
+    })
+    .then(res => {
+      if (res && res.ok) {
         toast(editingId ? 'Hero diperbarui' : 'Hero baru ditambahkan');
         closeModal();
         setTimeout(() => location.reload(), 600);
-      } else { toast(res.error || 'Gagal menyimpan', true); }
+      }
     })
     .catch(() => toast('Gagal terhubung server', true));
 }
@@ -529,8 +556,8 @@ function syncReciprocal(input) {
   const v = parseFloat(input.value);
   if (!v || v <= 0) return;
   const table = input.closest('table.matrix-grid');
-  const lower = table.querySelector(`input.lower[data-i="${j}"][data-j="${i}"]`);
-  if (lower) lower.value = (1 / v).toFixed(4);
+  const mirror = table.querySelector(`input[data-i="${j}"][data-j="${i}"]`);
+  if (mirror) mirror.value = (1 / v).toFixed(4);
 }
 
 function saveMatrix(role, idx) {
@@ -541,7 +568,12 @@ function saveMatrix(role, idx) {
   let invalid = false;
   table.querySelectorAll('input.upper').forEach(inp => {
     const i = +inp.dataset.i, j = +inp.dataset.j;
-    const v = parseFloat(inp.value);
+    let v = parseFloat(inp.value);
+    if (!v || v <= 0) {
+      const lower = table.querySelector(`input.lower[data-i="${j}"][data-j="${i}"]`);
+      const lv = lower ? parseFloat(lower.value) : NaN;
+      if (lv && lv > 0) { v = 1 / lv; inp.value = v.toFixed(4); }
+    }
     if (!v || v <= 0) invalid = true;
     matrix[i][j] = v;
     matrix[j][i] = v ? 1 / v : 1;
@@ -585,5 +617,86 @@ function applyAhpResult(role, a) {
 document.getElementById('heroModal').addEventListener('click', e => {
   if (e.target.id === 'heroModal') closeModal();
 });
+
+/* ---------------- HERO AVATAR: Fandom fallback + hover preview ---------------- */
+const _AVATAR_STOP_WORDS = ['the','of','a','an','in','on','and','to','for','with'];
+function _heroSlug(name) {
+  return String(name).trim().split(/\s+/).map((w, i) => {
+    const lower = w.toLowerCase();
+    if (i > 0 && _AVATAR_STOP_WORDS.indexOf(lower) !== -1) return lower;
+    return w[0].toUpperCase() + w.slice(1).toLowerCase();
+  }).join('_');
+}
+function _attachFandomFallback(img, name) {
+  const enc = encodeURIComponent(_heroSlug(name));
+  const base = 'https://mobile-legends.fandom.com/wiki/Special:FilePath/';
+  img.dataset.f1 = base + enc + '.png';
+  img.dataset.f2 = base + 'Hero_' + enc + '_image.png';
+  img.dataset.f3 = base + enc + '_Portrait.png';
+  img.onerror = function() {
+    if (this.dataset.f1) { this.src = this.dataset.f1; this.dataset.f1 = ''; }
+    else if (this.dataset.f2) { this.src = this.dataset.f2; this.dataset.f2 = ''; }
+    else if (this.dataset.f3) { this.src = this.dataset.f3; this.dataset.f3 = ''; }
+    else { this.remove(); }
+  };
+  img.src = base + 'Hero_' + enc + '.png';
+}
+function enhanceAvatars(root) {
+  (root || document).querySelectorAll('#heroTbody .ap-hero-avatar').forEach(av => {
+    if (av.dataset.enhanced) return;
+    av.dataset.enhanced = '1';
+    let img = av.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = ''; img.loading = 'lazy';
+      img.referrerPolicy = 'no-referrer';
+      av.insertBefore(img, av.firstChild);
+      _attachFandomFallback(img, av.dataset.heroName || '');
+    }
+    // Cloudinary img sudah punya src valid; tidak perlu fallback chain.
+  });
+}
+
+/* Global hover-preview popover (single shared element) */
+let _previewEl = null;
+function _previewElement() {
+  if (_previewEl) return _previewEl;
+  _previewEl = document.createElement('div');
+  _previewEl.className = 'hero-preview-popover';
+  _previewEl.innerHTML = '<img alt="" referrerpolicy="no-referrer">';
+  document.body.appendChild(_previewEl);
+  return _previewEl;
+}
+function _showPreview(av) {
+  const sm = av.querySelector('img');
+  if (!sm || !sm.src) return;
+  const pop = _previewElement();
+  pop.querySelector('img').src = sm.src;
+  pop.style.display = 'block';
+  const rect = av.getBoundingClientRect();
+  const W = 180, H = 180, M = 10;
+  let left = rect.right + 8;
+  if (left + W > window.innerWidth - M) left = rect.left - W - 8;
+  if (left < M) left = M;
+  let top = rect.top + rect.height / 2 - H / 2;
+  if (top < M) top = M;
+  if (top + H > window.innerHeight - M) top = window.innerHeight - H - M;
+  pop.style.left = (left + window.scrollX) + 'px';
+  pop.style.top  = (top  + window.scrollY) + 'px';
+}
+function _hidePreview() {
+  if (_previewEl) _previewEl.style.display = 'none';
+}
+document.addEventListener('mouseover', e => {
+  const av = e.target.closest('#heroTbody .ap-hero-avatar');
+  if (av) _showPreview(av);
+});
+document.addEventListener('mouseout', e => {
+  const av = e.target.closest('#heroTbody .ap-hero-avatar');
+  const to = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#heroTbody .ap-hero-avatar');
+  if (av && av !== to) _hidePreview();
+});
+
+document.addEventListener('DOMContentLoaded', () => enhanceAvatars());
 </script>
 {% endblock %}

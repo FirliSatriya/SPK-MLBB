@@ -272,45 +272,71 @@ def load_ahp_from_db():
     finally:
         s.close()
 
-# Load data at startup — DB-only.
-def _startup_or_die():
+# Deteksi serverless (Vercel set env `VERCEL=1`). Di serverless kita tidak boleh
+# sys.exit() karena itu akan crash function untuk SEMUA request (FUNCTION_INVOCATION_FAILED).
+# Di local dev, hard-fail tetap berguna supaya cepat tahu DB salah konfigurasi.
+IS_SERVERLESS = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+STARTUP_ERROR = None
+
+
+def _print_db_help(prefix=""):
+    print(f"{prefix} Kemungkinan penyebab:")
+    print(f"{prefix} 1. ISP/wifi/kampus memblok port 5432 outbound (paling sering).")
+    print(f"{prefix}    -> Test dengan tethering data HP: kalau jalan = network kantor/kampus block.")
+    print(f"{prefix} 2. Firewall Windows / antivirus blok psycopg2.")
+    print(f"{prefix}    -> Cek Windows Defender > Allow app through firewall.")
+    print(f"{prefix} 3. Neon instance suspended atau jaringan Neon down.")
+    print(f"{prefix}    -> Cek https://console.neon.tech untuk status project Anda.")
+    print(f"{prefix} 4. DATABASE_URL salah / password expired.")
+    print(f"{prefix}    -> Generate ulang connection string di Neon dashboard.")
+
+
+# Load data at startup.
+def _startup():
+    """Returns (heroes, scores, ahp_mats_per_role, error_message).
+    Pada serverless, error tidak fatal — app tetap boot dengan state kosong
+    supaya routes lain (mis. /health) masih bisa dipanggil untuk diagnose."""
+    global STARTUP_ERROR
+    empty = ([], {}, {r: [] for r in ROLES})
     if not DB_ENABLED:
+        msg = "DATABASE_URL tidak diset (cek environment variables di Vercel/`.env`)"
         print("\n" + "=" * 70)
-        print(" STARTUP GAGAL: DATABASE_URL tidak diset.")
-        print(" Set DATABASE_URL di .env, lalu jalankan ulang.")
+        print(f" STARTUP GAGAL: {msg}")
         print("=" * 70)
-        sys.exit(1)
+        if not IS_SERVERLESS:
+            sys.exit(1)
+        STARTUP_ERROR = msg
+        return empty
     try:
         init_db()
         seed_default_admin()
         heroes, scores = load_heroes_from_db()
         if not heroes:
+            msg = "DB tersambung tapi tabel heroes kosong. Jalankan `python migrate.py` untuk seed data."
             print("\n" + "=" * 70)
-            print(" STARTUP GAGAL: DB tersambung tapi tabel heroes kosong.")
-            print(" Restore CSV dari git history lalu jalankan `python migrate.py`.")
+            print(f" STARTUP GAGAL: {msg}")
             print("=" * 70)
-            sys.exit(1)
+            if not IS_SERVERLESS:
+                sys.exit(1)
+            STARTUP_ERROR = msg
+            return empty
         db_mats_ = load_ahp_from_db()
         return heroes, scores, {r: db_mats_.get(r, []) for r in ROLES}
     except Exception as e:
+        err = str(e)[:300]
+        msg = f"Tidak bisa connect ke Neon Postgres: {err}"
         print("\n" + "=" * 70)
-        print(" STARTUP GAGAL: tidak bisa connect ke Neon Postgres.")
-        print(f" Error: {str(e)[:200]}")
+        print(f" STARTUP GAGAL: {msg}")
         print("")
-        print(" Kemungkinan penyebab:")
-        print(" 1. ISP/wifi/kampus memblok port 5432 outbound (paling sering).")
-        print("    -> Test dengan tethering data HP: kalau jalan = network kantor/kampus block.")
-        print(" 2. Firewall Windows / antivirus blok psycopg2.")
-        print("    -> Cek Windows Defender > Allow app through firewall.")
-        print(" 3. Neon instance suspended atau jaringan Neon down.")
-        print("    -> Cek https://console.neon.tech untuk status project Anda.")
-        print(" 4. DATABASE_URL salah / password expired.")
-        print("    -> Generate ulang connection string di Neon dashboard.")
+        _print_db_help()
         print("=" * 70)
-        sys.exit(1)
+        if not IS_SERVERLESS:
+            sys.exit(1)
+        STARTUP_ERROR = msg
+        return empty
 
 
-HEROES, SCORES, AHP_MATS = _startup_or_die()
+HEROES, SCORES, AHP_MATS = _startup()
 
 # Pad any role with fewer than 3 matrices using identity-ish fallback
 for r in ROLES:
@@ -440,6 +466,22 @@ app.jinja_env.globals['portrait_html'] = portrait_html
 # ============================================================
 @app.route("/")
 def draft():
+    if STARTUP_ERROR:
+        # Saat serverless boot tapi DB belum siap, tampilkan error page yang jelas
+        # supaya user tahu apa yang harus diperbaiki (bukan 500 yang menyesatkan).
+        return (
+            "<html><body style='font-family:system-ui;padding:40px;max-width:720px;margin:auto;line-height:1.6'>"
+            "<h1 style='color:#dc2626'>SPK Draft Pick — Konfigurasi belum lengkap</h1>"
+            f"<p><b>Error:</b> {STARTUP_ERROR}</p>"
+            "<p>Cek konfigurasi:</p>"
+            "<ul>"
+            "<li>Vercel Dashboard → Project Settings → Environment Variables → <code>DATABASE_URL</code></li>"
+            "<li>Neon Console → status project (tidak suspended) & connection string valid</li>"
+            "<li>Setelah set env var, klik <i>Redeploy</i> di Vercel</li>"
+            "</ul>"
+            "<p>Detail status: <a href='/health'>/health</a></p>"
+            "</body></html>"
+        ), 503
     refresh_hero_images_from_db()
     return render_template("draft.html", heroes=HEROES, roles=ROLES)
 

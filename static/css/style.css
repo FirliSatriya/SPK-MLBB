@@ -1527,6 +1527,118 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
   flex-direction: column;
   gap: 10px;
 }
+.v2-rec-bar.v2-rec-bar-top {
+  border-top: none;
+  border-bottom: 1px solid var(--v2-line-gold);
+  background: linear-gradient(0deg, rgba(229,184,75,0.04), rgba(2,5,12,0.95));
+}
+
+/* ============ Role picker popup (multi-role pick) ============ */
+.role-picker-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  animation: rp-fade 0.18s ease;
+}
+@keyframes rp-fade { from { opacity: 0; } to { opacity: 1; } }
+.role-picker-card {
+  width: min(420px, 92vw);
+  background: linear-gradient(180deg, rgba(11,20,40,0.98), rgba(2,5,12,0.98));
+  border: 1px solid var(--v2-line-gold);
+  border-radius: 6px;
+  padding: 22px 22px 16px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.5), 0 0 40px rgba(229,184,75,0.15);
+  animation: rp-pop 0.18s ease;
+}
+.role-picker-card.blue { border-color: var(--v2-blue-team); box-shadow: 0 18px 60px rgba(0,0,0,0.5), 0 0 40px rgba(63,169,245,0.25); }
+.role-picker-card.red  { border-color: var(--v2-red-team);  box-shadow: 0 18px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,77,77,0.25); }
+@keyframes rp-pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.role-picker-eyebrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px; letter-spacing: 0.24em;
+  color: var(--v2-text-muted);
+  text-align: center;
+  margin-bottom: 14px;
+}
+.role-picker-hero {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--v2-line-soft);
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+.role-picker-hero .rp-portrait {
+  width: 52px; height: 52px;
+  border-radius: 4px; flex-shrink: 0;
+  position: relative;
+  display: grid; place-items: center;
+  font-family: 'Orbitron', monospace; font-weight: 900;
+  color: rgba(255,255,255,0.95);
+}
+.role-picker-hero .rp-info { flex: 1; min-width: 0; }
+.role-picker-hero .rp-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 15px; letter-spacing: 0.06em; color: #fff;
+}
+.role-picker-hero .rp-class {
+  font-size: 11px; color: var(--v2-text-muted); letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+.role-picker-buttons {
+  display: flex; flex-direction: column; gap: 7px;
+  margin-bottom: 12px;
+}
+.role-picker-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--v2-line-soft);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.16s;
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+}
+.role-picker-btn:hover {
+  background: rgba(229,184,75,0.14);
+  border-color: var(--v2-gold);
+  transform: translateX(2px);
+}
+.role-picker-btn.blue:hover { background: rgba(63,169,245,0.16); border-color: var(--v2-blue-team); }
+.role-picker-btn.red:hover  { background: rgba(255,77,77,0.14);  border-color: var(--v2-red-team); }
+.role-picker-btn .rp-role {
+  font-size: 13px; letter-spacing: 0.14em; font-weight: 700;
+}
+.role-picker-btn .rp-pickas {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9px; letter-spacing: 0.22em; color: var(--v2-text-muted);
+}
+.role-picker-cancel {
+  display: block; width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid var(--v2-line-soft);
+  border-radius: 4px;
+  color: var(--v2-text-muted);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.18em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.role-picker-cancel:hover { color: var(--v2-text); border-color: rgba(255,255,255,0.25); }
+
+[data-theme="light"] .role-picker-overlay { background: rgba(15,23,42,0.55); }
+[data-theme="light"] .role-picker-card {
+  background: linear-gradient(180deg, #fff, #f4f6fb);
+  color: #0f172a;
+}
+[data-theme="light"] .role-picker-hero .rp-name,
+[data-theme="light"] .role-picker-btn { color: #0f172a; }
+[data-theme="light"] .role-picker-hero { background: rgba(15,23,42,0.04); }
+[data-theme="light"] .role-picker-btn { background: rgba(15,23,42,0.03); }
 .rec-bar-row {
   display: grid;
   grid-template-columns: auto 1fr auto;

@@ -181,6 +181,13 @@
 
   <!-- ====== 2. DRAFT BOARD (V2 cinematic) ====== -->
   <section id="draftBoard" class="v2-draft" style="display:none">
+    <button id="pauseBtn" class="v2-pause-btn" onclick="togglePause()" title="Pause / Resume timer (Spasi)">
+      <svg id="pauseIcon" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0">
+        <rect x="6" y="4" width="4" height="16" rx="0.5"/>
+        <rect x="14" y="4" width="4" height="16" rx="0.5"/>
+      </svg>
+      <span class="v2-pause-label">PAUSE</span>
+    </button>
     <div class="v2-phase-bar">
       <div class="v2-phase-team blue">
         <div class="team-emblem">B</div>
@@ -262,7 +269,7 @@
   let step = 0, stepTaken = 0;
   let picks = { blue: [], red: [] };
   let bans = { blue: [], red: [] };
-  let timer = 0, timerInterval = null;
+  let timer = 0, timerInterval = null, isPaused = false;
   let scenario = 'default';
   let search = '', roleFilter = 'ALL';
   let selectedRecRole = 'JUNGLING';   // role currently shown in rec bar
@@ -376,8 +383,26 @@
     return _slugCache[name] = slug;
   }
 
-  // Image source chain — all real MLBB Fandom wiki artwork variants.
-  // If every variant 404s the <img> is hidden so the gradient + initials show through (still MLBB-themed).
+  // Cloudinary URL transform — sisip parameter optimasi sebelum versi path.
+  // 120x120 fill (cukup buat tile retina), f_auto=AVIF/WebP, q_auto:eco=hemat.
+  const CLOUDINARY_PARAMS = 'w_120,h_120,c_fill,g_face,f_auto,q_auto:eco';
+  function _withCloudinaryTransform(url) {
+    if (!url || url.indexOf('res.cloudinary.com') === -1) return url;
+    const marker = '/upload/';
+    const i = url.indexOf(marker);
+    if (i < 0 || url.indexOf(CLOUDINARY_PARAMS) !== -1) return url;
+    return url.slice(0, i + marker.length) + CLOUDINARY_PARAMS + '/' + url.slice(i + marker.length);
+  }
+
+  // Retry sekali sebelum hide — handle transient network/cache miss.
+  // Dipasang ke window supaya bisa dipanggil dari onerror inline.
+  window._imgRetry = function(img) {
+    if (img.dataset.r) { img.style.display = 'none'; return; }
+    img.dataset.r = '1';
+    const s = img.src;
+    setTimeout(() => { img.src = s; }, 800);
+  };
+
   // Helper: produce <img> tag. Accepts hero object OR plain name (back-compat).
   // Priority: Cloudinary image_url (stored in DB) > Fandom wiki guesses > letter fallback.
   function imgTag(heroOrName) {
@@ -387,9 +412,10 @@
     const cacheKey = (hero && hero.image_url) ? ('U:' + hero.image_url) : ('N:' + name);
     if (_imgCache[cacheKey]) return _imgCache[cacheKey];
     if (hero && hero.image_url) {
-      const html = '<img class="hero-img" src="' + hero.image_url +
+      const src = _withCloudinaryTransform(hero.image_url);
+      const html = '<img class="hero-img" src="' + src +
         '" alt="" loading="lazy" referrerpolicy="no-referrer" ' +
-        'onerror="this.style.display=&quot;none&quot;">';
+        'onerror="window._imgRetry(this)">';
       return _imgCache[cacheKey] = html;
     }
     const enc = encodeURIComponent(heroSlug(name));
@@ -450,7 +476,22 @@
       if (el) el.style.display = (s === id) ? '' : 'none';
     });
   }
-  function backToLanding() { clearInterval(timerInterval); showOnly('landingScreen'); }
+  function backToLanding() {
+    clearInterval(timerInterval); timerInterval = null;
+    isPaused = false;
+    showOnly('landingScreen');
+  }
+
+  // Spasi = toggle pause (kalau lagi di draft board, dan bukan di input)
+  document.addEventListener('keydown', (ev) => {
+    if (ev.code !== 'Space') return;
+    const tag = (ev.target && ev.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    const board = document.getElementById('draftBoard');
+    if (!board || board.style.display === 'none') return;
+    ev.preventDefault();
+    togglePause();
+  });
 
   function startDraft() {
     step = 0; stepTaken = 0;
@@ -468,19 +509,56 @@
     fetchRecs().then(renderBoard);
   }
 
+  function _tickTimer() {
+    timer--;
+    updateTimerUI();
+    if (timer <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      autoFillRemaining();   // ensures count is always met before advancing
+    }
+  }
+
   function startTimer() {
     const cur = DRAFT_SEQ[step];
     timer = cur ? cur.timer : 28;
+    isPaused = false;                              // selalu reset pause saat step baru
     clearInterval(timerInterval);
     updateTimerUI();
-    timerInterval = setInterval(() => {
-      timer--;
-      updateTimerUI();
-      if (timer <= 0) {
-        clearInterval(timerInterval);
-        autoFillRemaining();   // ensures count is always met before advancing
-      }
-    }, 1000);
+    _renderPauseBtn();
+    timerInterval = setInterval(_tickTimer, 1000);
+  }
+
+  function togglePause() {
+    if (step >= DRAFT_SEQ.length) return;          // udah finish
+    if (timer <= 0) return;                        // udah habis
+    isPaused = !isPaused;
+    if (isPaused) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    } else {
+      timerInterval = setInterval(_tickTimer, 1000);
+    }
+    updateTimerUI();
+    _renderPauseBtn();
+  }
+
+  function _renderPauseBtn() {
+    const icon  = document.getElementById('pauseIcon');
+    const btn   = document.getElementById('pauseBtn');
+    const label = btn ? btn.querySelector('.v2-pause-label') : null;
+    if (!icon || !btn) return;
+    if (isPaused) {
+      icon.innerHTML = '<polygon points="6 4 20 12 6 20 6 4"/>';
+      if (label) label.textContent = 'RESUME';
+      btn.title = 'Lanjutkan timer (Spasi)';
+      btn.classList.add('paused');
+    } else {
+      icon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="0.5"/><rect x="14" y="4" width="4" height="16" rx="0.5"/>';
+      if (label) label.textContent = 'PAUSE';
+      btn.title = 'Pause timer (Spasi)';
+      btn.classList.remove('paused');
+    }
   }
 
   function advanceStep() {
@@ -743,7 +821,7 @@
     el.textContent = String(Math.max(0, timer)).padStart(2, '0');
     const max = (DRAFT_SEQ[step] && DRAFT_SEQ[step].timer) || 28;
     const cls = timer > max * 0.5 ? '' : timer > max * 0.2 ? ' warn' : ' danger';
-    el.className = 'v2-phase-timer' + cls;
+    el.className = 'v2-phase-timer' + cls + (isPaused ? ' paused' : '');
   }
 
   function renderTeamColumn(team) {
@@ -807,11 +885,11 @@
       return (h.roles || []).every(r => filledRoles.has(r));
     };
 
-    // Top-5 ids in the currently-selected rec role get a highlight in the pool
+    // Top-7 ids in the currently-selected rec role get a highlight in the pool
     const recommendedIds = new Set();
     if (isOurTurn && isPick) {
       const list = currentRecs[selectedRecRole] || [];
-      list.filter(h => !taken.has(h.id)).slice(0, 5).forEach(h => recommendedIds.add(h.id));
+      list.filter(h => !taken.has(h.id)).slice(0, 7).forEach(h => recommendedIds.add(h.id));
     }
 
     let filtered = ALL_HEROES;
@@ -873,7 +951,7 @@
       }).join('');
 
       // Top-5 for selected role (skip already-taken / banned heroes)
-      const list = (currentRecs[selectedRecRole] || []).filter(h => !taken.has(h.id)).slice(0, 5);
+      const list = (currentRecs[selectedRecRole] || []).filter(h => !taken.has(h.id)).slice(0, 7);
 
       const cardsHtml = list.length === 0
         ? '<div class="v2-rec-bar-waiting" style="grid-column:1/-1"><span>Tidak ada hero tersedia untuk ' + selectedRecRole + '</span></div>'
@@ -895,7 +973,7 @@
 
       recBar.innerHTML =
         '<div class="rec-bar-row">' +
-          '<div class="v2-rec-title"><span class="pulse-dot"></span>SAW · TOP 5 ' + selectedRecRole + '</div>' +
+          '<div class="v2-rec-title"><span class="pulse-dot"></span>SAW · TOP 7 ' + selectedRecRole + '</div>' +
           '<div class="rec-role-tabs">' + roleTabsHtml + '</div>' +
           scenarioTabsHtml +
         '</div>' +
@@ -956,5 +1034,33 @@
     document.getElementById('finishContent').innerHTML =
       mkTeam('blue') + '<div class="v2-finish-vs-divider">VS</div>' + mkTeam('red');
   }
+
+  /* ─────────── preload semua image hero saat halaman load ───────────
+     Browser fetch di idle time → cache warm. Saat user buka draft, semua
+     image udah ada di cache, gak perlu fetch lagi tiap interaksi. */
+  function preloadAllHeroImages() {
+    let i = 0;
+    const list = ALL_HEROES.filter(h => h.image_url);
+    function preloadNext() {
+      if (i >= list.length) return;
+      const h = list[i++];
+      const im = new Image();
+      im.src = _withCloudinaryTransform(h.image_url);
+      // chain selanjutnya di idle berikutnya supaya gak satu burst kirim 132 request
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(preloadNext, { timeout: 1500 });
+      } else {
+        setTimeout(preloadNext, 16);
+      }
+    }
+    preloadNext();
+  }
+  window.addEventListener('load', () => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(preloadAllHeroImages, { timeout: 2000 });
+    } else {
+      setTimeout(preloadAllHeroImages, 300);
+    }
+  });
 </script>
 {% endblock %}

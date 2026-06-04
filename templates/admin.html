@@ -18,6 +18,7 @@
   <div class="tb-tabs" id="adminTabs">
     <button class="tb-tab active" data-tab="heroes" onclick="showTab(this,'heroes')">Data Hero</button>
     <button class="tb-tab" data-tab="ahp" onclick="showTab(this,'ahp')">Bobot AHP</button>
+    <button class="tb-tab" data-tab="rekomendasi" onclick="showTab(this,'rekomendasi')">Hasil Rekomendasi</button>
     <button class="tb-tab" data-tab="stats" onclick="showTab(this,'stats')">Statistik</button>
   </div>
 
@@ -219,6 +220,107 @@
   </div>
 
   <!-- ====================================
+       TAB: HASIL REKOMENDASI (AHP-SAW)
+       ==================================== -->
+  {% set short = {"Difficulty":"Diff","Crowd Control":"CC","Mobility":"Mob","Utility":"Util","Durability":"Dur","Offense":"Off"} %}
+  {% set bar_colors = ["#3FA9F5","#E5B84B","#34D399","#C084FC","#F87171","#FB923C"] %}
+  <div class="admin-tab" id="tab-rekomendasi" style="display:none">
+    <div class="ap-card" style="margin-bottom:18px">
+      <div class="ap-card-header">
+        <div class="ap-card-title">Tentang Hasil Rekomendasi</div>
+      </div>
+      <div class="ap-card-body" style="font-size:13px;color:var(--ap-text-muted);line-height:1.65">
+        Daftar <strong style="color:var(--ap-gold)">Top-10 hero rekomendasi per role</strong> berdasarkan
+        metode <strong style="color:var(--ap-text)">SAW (Simple Additive Weighting)</strong> dengan bobot
+        kriteria dari hasil AHP yang sudah teruji konsisten (CR ≤ 0.10).
+        Nilai <strong style="color:var(--ap-gold)">Vi</strong> adalah skor preferensi akhir
+        (V<sub>i</sub> = Σ w<sub>j</sub> × r<sub>ij</sub>). Skenario yang dipakai: <strong style="color:var(--ap-text)">Default</strong>
+        (tanpa penyesuaian agresif/aman, tanpa hero yang di-ban).
+      </div>
+    </div>
+
+    <div class="tb-tabs" style="margin-bottom:18px;padding:0">
+      {% for r in roles %}
+      <button class="tb-tab {% if loop.first %}active{% endif %}" onclick="showRecRole(this,'{{ r }}')">{{ r }}</button>
+      {% endfor %}
+    </div>
+
+    {% for r in roles %}
+    <div class="rec-role-pane" data-role="{{ r }}" {% if not loop.first %}style="display:none"{% endif %}>
+      <!-- Top weights summary card -->
+      <div class="ap-card" style="margin-bottom:14px">
+        <div class="ap-card-header">
+          <div class="ap-card-title">Bobot AHP — {{ r }}</div>
+          <span class="ap-status {{ 'good' if ahp[r].consistent else 'bad' }}">
+            <span class="dot"></span>CR = {{ "%.4f"|format(ahp[r].cr) }}
+          </span>
+        </div>
+        <div class="ap-card-body">
+          <div id="recBars-{{ r|replace(' ','_') }}">
+            {% for c in criteria %}
+            {% set w = ahp[r].weights[loop.index0] %}
+            <div class="ap-weight-row">
+              <div class="ap-weight-label"><span class="ap-weight-dot" style="background:{{ bar_colors[loop.index0] }}"></span>{{ c }}</div>
+              <div class="ap-weight-bar"><div class="ap-weight-fill" style="width:{{ (w*100)|round(2) }}%;background:{{ bar_colors[loop.index0] }}"></div></div>
+              <div class="ap-weight-value">{{ "%.2f"|format(w*100) }}%</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Top-10 table -->
+      <div class="ap-card">
+        <div class="ap-card-header">
+          <div class="ap-card-title">Top-10 Rekomendasi Hero — {{ r }}</div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ap-text-muted);letter-spacing:.06em">
+            {{ recommendations[r]|length }} hero
+          </span>
+        </div>
+        <div class="ap-tbl-wrap">
+          <table class="ap-tbl">
+            <thead>
+              <tr>
+                <th style="width:60px;text-align:center">Rank</th>
+                <th>Hero</th>
+                <th>Class</th>
+                {% for c in criteria %}<th style="text-align:center">{{ short[c] }}</th>{% endfor %}
+                <th style="text-align:right;width:90px">Vi</th>
+                <th style="text-align:right;width:80px">Vi (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in recommendations[r] %}
+              <tr>
+                <td style="text-align:center;font-family:'Orbitron',monospace;font-weight:700;font-size:13px;color:{% if loop.index == 1 %}var(--ap-gold){% elif loop.index == 2 %}#B4BEC9{% elif loop.index == 3 %}#D08456{% else %}var(--ap-text-muted){% endif %}">
+                  {{ loop.index }}
+                </td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div class="ap-hero-avatar" data-hero-name="{{ h.name }}" style="background:{{ hero_color(h.name) }}">
+                      {% if h.image_url %}<img src="{{ h.image_url }}" alt="{{ h.name }}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">{% endif %}
+                      <span class="initials">{{ hero_initials(h.name) }}</span>
+                    </div>
+                    <span class="hero-name" style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.04em;color:var(--ap-text)">{{ h.name }}</span>
+                  </div>
+                </td>
+                <td><span class="ap-badge {{ h.class.split('/')[0].split(',')[0].strip() }}">{{ h.class }}</span></td>
+                {% for c in criteria %}
+                <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--ap-gold);font-size:12px">{{ "%.2f"|format(h.scores.get(c, 0)) }}</td>
+                {% endfor %}
+                <td style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ap-text)">{{ "%.4f"|format(h.vi) }}</td>
+                <td style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ap-gold);font-weight:700">{{ "%.2f"|format(h.vi_pct) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ====================================
        TAB 3: STATISTIK
        ==================================== -->
   <div class="admin-tab" id="tab-stats" style="display:none">
@@ -337,6 +439,13 @@ function showAhpRole(btn, role) {
   btn.classList.add('active');
   document.querySelectorAll('.ahp-role-pane').forEach(p => p.style.display = 'none');
   document.querySelector('.ahp-role-pane[data-role="' + role + '"]').style.display = '';
+}
+
+function showRecRole(btn, role) {
+  btn.parentElement.querySelectorAll('.tb-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.rec-role-pane').forEach(p => p.style.display = 'none');
+  document.querySelector('.rec-role-pane[data-role="' + role + '"]').style.display = '';
 }
 
 function adminFilter() {

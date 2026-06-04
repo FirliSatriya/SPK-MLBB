@@ -17,6 +17,8 @@ from functools import wraps
 
 import bcrypt
 import jwt
+import numpy as np
+import ahpy
 
 import db as dbmod
 from db import Hero, HeroScore, AHPMatrix, User, get_session, init_db, DB_ENABLED
@@ -139,6 +141,15 @@ HERO_CLASSES = ["Tank", "Fighter", "Assassin", "Mage", "Marksman", "Support"]
 # ============================================================
 # UTILITIES
 # ============================================================
+# Tabel Random Index Saaty — PRD Bab 11.3 (line 443-445)
+_RI_TABLE = {3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24,
+             7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49}
+
+# Nama kriteria untuk ahpy cross-check (urutan match CRITERIA_ORDER)
+_AHPY_CRITERIA = ["Difficulty", "CrowdControl", "Mobility",
+                  "Utility", "Durability", "Offense"]
+
+
 def parse_frac(v):
     v = str(v).strip()
     if not v: return None
@@ -147,22 +158,79 @@ def parse_frac(v):
         return float(p[0]) / float(p[1])
     return float(v)
 
+
 def geo_mean(mats):
-    n, k = 6, len(mats)
-    return [[math.prod(m[i][j] for m in mats)**(1/k) for j in range(n)] for i in range(n)]
+    """Agregasi k matriks penilai jadi 1 matriks konsensus.
+    Geometric mean per-sel — menjaga sifat resiprokal Saaty
+    (Aczél & Saaty 1983, J. Math. Psychology)."""
+    arr = np.array(mats, dtype=float)                       # shape (k, n, n)
+    return (np.prod(arr, axis=0) ** (1.0 / arr.shape[0])).tolist()
+
 
 def calc_ahp(mat):
-    n = len(mat)
-    cs = [sum(mat[i][j] for i in range(n)) for j in range(n)]
-    norm = [[mat[i][j]/cs[j] for j in range(n)] for i in range(n)]
-    w = [sum(norm[i][j] for j in range(n))/n for i in range(n)]
-    aw = [sum(mat[i][j]*w[j] for j in range(n)) for i in range(n)]
-    lams = [aw[i]/w[i] for i in range(n)]
-    lmax = sum(lams)/n
-    ci = (lmax - n)/(n - 1)
-    cr = ci / 1.24
-    return {"weights": [round(x, 6) for x in w], "lambda_max": round(lmax, 4),
-            "ci": round(ci, 4), "cr": round(cr, 4), "consistent": cr <= 0.10}
+    """Perhitungan AHP sesuai PRD Bab 11.2 — Saaty Normalization Method.
+       Step 2: jumlah kolom Sj.
+       Step 3: normalisasi nij = aij / Sj.
+       Step 4: bobot prioritas wi = (1/n) Σj nij.
+       Step 5: λmax = mean( (AW)i / wi ).
+       Step 6: CI = (λmax − n)/(n − 1).
+       Step 7: CR = CI / RI (RI=1.24 untuk n=6).
+       Plus cross-validation independen dengan pustaka `ahpy`."""
+    A = np.array(mat, dtype=float)
+    n = A.shape[0]
+
+    # ── PRD Step 2-4: bobot prioritas (normalisasi kolom + rata-rata baris)
+    col_sum = A.sum(axis=0)                                 # Sj
+    norm = A / col_sum                                      # nij
+    w = norm.mean(axis=1)                                   # wi
+
+    # ── PRD Step 5: λmax
+    lams = (A @ w) / w                                      # λi = (AW)i / wi
+    lmax = lams.mean()
+
+    # ── PRD Step 6-7: CI, CR
+    ci = (lmax - n) / (n - 1)
+    ri = _RI_TABLE.get(n, 1.24)
+    cr = ci / ri
+
+    # ── Cross-validation independen via ahpy (Geometric Mean Method)
+    try:
+        ahpy_w, ahpy_cr = _calc_ahp_ahpy(A)
+        max_diff = float(np.abs(w - ahpy_w).max())
+        ahpy_w_out = [round(float(x), 6) for x in ahpy_w]
+        ahpy_cr_out = round(float(ahpy_cr), 4)
+        max_diff_out = round(max_diff, 6)
+    except Exception as e:
+        # Jangan rusak perhitungan utama kalau ahpy gagal (mis. matriks degenerate)
+        print(f"[ahp] ahpy cross-check skipped: {e}")
+        ahpy_w_out, ahpy_cr_out, max_diff_out = None, None, None
+
+    return {
+        "weights":         [round(float(x), 6) for x in w],
+        "lambda_max":      round(float(lmax), 4),
+        "ci":              round(float(ci), 4),
+        "cr":              round(float(cr), 4),
+        "consistent":      bool(cr <= 0.10),
+        # Cross-validation independen (PRD-method vs ahpy geometric mean)
+        "ahpy_weights":    ahpy_w_out,
+        "ahpy_cr":         ahpy_cr_out,
+        "max_weight_diff": max_diff_out,
+    }
+
+
+def _calc_ahp_ahpy(A):
+    """Bobot & CR via pustaka `ahpy` (Geometric Mean Method).
+       Dipakai sebagai independent verifier terhadap implementasi PRD."""
+    n = A.shape[0]
+    comparisons = {}
+    for i in range(n):
+        for j in range(i + 1, n):
+            comparisons[(_AHPY_CRITERIA[i], _AHPY_CRITERIA[j])] = float(A[i, j])
+    cmp = ahpy.Compare(name="ahp", comparisons=comparisons,
+                       precision=6, random_index="saaty")
+    w = np.array([cmp.target_weights[c] for c in _AHPY_CRITERIA])
+    return w, cmp.consistency_ratio
+
 
 def recompute_role(role):
     mats = AHP_MATS[role]
@@ -484,9 +552,16 @@ def logout():
 @login_required
 def admin():
     role_counts = {r: sum(1 for h in HEROES if r in h["roles"]) for r in ROLES}
+    # Top-10 rekomendasi SAW per role (default scenario, tanpa exclude)
+    recommendations = {}
+    for role in ROLES:
+        w = AHP_RESULTS[role]["weights"]
+        cands = [h for h in HEROES if role in h["roles"]]
+        recommendations[role] = calc_saw(cands, SCORES, w, [], "default")[:10]
     return render_template("admin.html", heroes=HEROES, roles=ROLES, criteria=CRITERIA_ORDER,
                            ahp=AHP_RESULTS, ahp_mats=AHP_MATS, evaluators=EVALUATORS,
-                           hero_classes=HERO_CLASSES, role_counts=role_counts)
+                           hero_classes=HERO_CLASSES, role_counts=role_counts,
+                           recommendations=recommendations)
 
 # --- Hero CRUD ---
 @app.route("/admin/create_hero", methods=["POST"])
@@ -630,7 +705,7 @@ def api_recommend():
         w = AHP_RESULTS[role]["weights"]
         cands = [h for h in HEROES if role in h["roles"]]
         ranked = calc_saw(cands, SCORES, w, exclude, scenario)
-        results[role] = ranked[:5]
+        results[role] = ranked[:7]
     return jsonify(results)
 
 if __name__ == "__main__":

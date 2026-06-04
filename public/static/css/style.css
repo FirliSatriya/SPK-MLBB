@@ -1246,7 +1246,69 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
 }
 .v2-phase-timer.warn   { color: #F59E0B; }
 .v2-phase-timer.danger { color: var(--v2-red-team); animation: v2-pulse 0.6s ease-in-out infinite; }
+.v2-phase-timer.paused { color: var(--v2-text-muted); opacity: 0.55; animation: none; }
 @keyframes v2-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+/* Pause button — floating di pojok kanan atas draft board */
+.v2-draft { position: relative; }
+.v2-pause-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  padding: 0;
+  background: rgba(2,5,12,0.75);
+  border: 1px solid var(--v2-line-soft);
+  border-radius: 3px;
+  color: var(--v2-gold);
+  cursor: pointer;
+  transition: all 0.15s;
+  backdrop-filter: blur(4px);
+}
+.v2-pause-btn:hover {
+  background: rgba(229,184,75,0.16);
+  border-color: var(--v2-gold);
+  box-shadow: 0 0 10px rgba(229,184,75,0.4);
+}
+.v2-pause-btn.paused {
+  background: rgba(229,184,75,0.22);
+  border-color: var(--v2-gold);
+  box-shadow: 0 0 12px rgba(229,184,75,0.55);
+  animation: v2-pulse-dot 1.5s ease-in-out infinite;
+}
+.v2-pause-btn svg { flex-shrink: 0; }
+/* Label hanya muncul saat hover, sebagai tooltip floating supaya gak nabrak */
+.v2-pause-label {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  padding: 3px 8px;
+  background: rgba(2,5,12,0.95);
+  border: 1px solid var(--v2-line-gold);
+  border-radius: 3px;
+  color: var(--v2-gold);
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.v2-pause-btn:hover .v2-pause-label { opacity: 1; }
+
+[data-theme="light"] .v2-pause-btn {
+  background: rgba(255,255,255,0.85);
+  color: #8a6a1f;
+  border-color: rgba(138,106,31,0.35);
+}
+[data-theme="light"] .v2-pause-btn:hover { background: rgba(178,125,41,0.14); }
+[data-theme="light"] .v2-pause-label { background: rgba(255,255,255,0.96); color: #8a6a1f; border-color: rgba(138,106,31,0.45); }
 
 .v2-arena {
   display: grid;
@@ -1695,17 +1757,17 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
 }
 @keyframes v2-pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-.v2-rec-cards { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
+.v2-rec-cards { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
 .v2-rec-card {
-  flex-shrink: 0;
-  display: flex; align-items: center; gap: 10px;
-  padding: 7px 12px 7px 7px;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px 6px 6px;
   background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
   border: 1px solid var(--v2-line-soft);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.18s;
-  min-width: 200px;
 }
 .v2-rec-card:hover {
   border-color: var(--v2-gold);

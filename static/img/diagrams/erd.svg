@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="one" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M4 0 L4 10" stroke="#334155" stroke-width="2" fill="none"/>
+    </marker>
+    <marker id="many" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="12" markerHeight="10" orient="auto">
+      <path d="M0 5 L11 0 M0 5 L11 10 M0 5 L11 5" stroke="#334155" stroke-width="1.5" fill="none"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="780" fill="#f8fafc"/>
+  <text x="600" y="40" text-anchor="middle" font-size="26" font-weight="700" fill="#0f172a">ERD — Neon Postgres (SPK Draft Pick MLBB)</text>
+  <text x="600" y="66" text-anchor="middle" font-size="14" fill="#475569">4 tabel: heroes · hero_scores · ahp_matrices · users   |   ORM: SQLAlchemy 2</text>
+
+  <!-- heroes -->
+  <g>
+    <rect x="60" y="110" width="320" height="270" rx="8" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.5"/>
+    <rect x="60" y="110" width="320" height="42" rx="8" fill="#1d4ed8"/>
+    <text x="220" y="138" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">heroes</text>
+    <g font-size="12" fill="#1e293b" font-family="Consolas, monospace">
+      <text x="80" y="172" font-weight="700" fill="#1d4ed8">🔑 id</text><text x="200" y="172">VARCHAR(8) PK</text>
+      <text x="80" y="192">name</text><text x="200" y="192">VARCHAR(64) NOT NULL</text>
+      <text x="80" y="212">hero_class</text><text x="200" y="212">VARCHAR(64) NOT NULL</text>
+      <text x="80" y="232">roles</text><text x="200" y="232">JSON (array)</text>
+      <text x="80" y="252">image_url</text><text x="200" y="252">VARCHAR(512) NULL</text>
+      <text x="80" y="272">image_public_id</text><text x="200" y="272">VARCHAR(255) NULL</text>
+      <text x="80" y="292">created_at</text><text x="200" y="292">TIMESTAMP DEFAULT now()</text>
+      <text x="80" y="312">updated_at</text><text x="200" y="312">TIMESTAMP onupdate</text>
+    </g>
+    <text x="220" y="352" text-anchor="middle" font-size="11" fill="#64748b" font-style="italic">Master data hero MLBB</text>
+    <text x="220" y="368" text-anchor="middle" font-size="11" fill="#64748b" font-style="italic">roles = ["JUNGLING","GOLD LANE",...]</text>
+  </g>
+
+  <!-- hero_scores -->
+  <g>
+    <rect x="460" y="110" width="320" height="270" rx="8" fill="#ffffff" stroke="#059669" stroke-width="2.5"/>
+    <rect x="460" y="110" width="320" height="42" rx="8" fill="#059669"/>
+    <text x="620" y="138" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">hero_scores</text>
+    <g font-size="12" fill="#1e293b" font-family="Consolas, monospace">
+      <text x="480" y="172" font-weight="700" fill="#059669">🔑 id</text><text x="600" y="172">SERIAL PK</text>
+      <text x="480" y="192" font-weight="700" fill="#dc2626">🔗 hero_id</text><text x="600" y="192">VARCHAR(8) FK</text>
+      <text x="480" y="212">criterion</text><text x="600" y="212">VARCHAR(32) NOT NULL</text>
+      <text x="480" y="232">value</text><text x="600" y="232">FLOAT DEFAULT 0.0</text>
+    </g>
+    <rect x="480" y="255" width="280" height="100" rx="6" fill="#f0fdf4" stroke="#059669" stroke-dasharray="4 3"/>
+    <text x="620" y="275" text-anchor="middle" font-size="11" font-weight="700" fill="#065f46">UNIQUE (hero_id, criterion)</text>
+    <text x="620" y="295" text-anchor="middle" font-size="11" fill="#065f46">criterion ∈ { Difficulty,</text>
+    <text x="620" y="311" text-anchor="middle" font-size="11" fill="#065f46">Crowd Control, Mobility,</text>
+    <text x="620" y="327" text-anchor="middle" font-size="11" fill="#065f46">Utility, Durability, Offense }</text>
+    <text x="620" y="347" text-anchor="middle" font-size="11" fill="#065f46">value: 0–5 (skala Likert)</text>
+  </g>
+
+  <!-- ahp_matrices -->
+  <g>
+    <rect x="860" y="110" width="320" height="270" rx="8" fill="#ffffff" stroke="#be185d" stroke-width="2.5"/>
+    <rect x="860" y="110" width="320" height="42" rx="8" fill="#be185d"/>
+    <text x="1020" y="138" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">ahp_matrices</text>
+    <g font-size="12" fill="#1e293b" font-family="Consolas, monospace">
+      <text x="880" y="172" font-weight="700" fill="#be185d">🔑 id</text><text x="1000" y="172">SERIAL PK</text>
+      <text x="880" y="192">role</text><text x="1000" y="192">VARCHAR(32) NOT NULL</text>
+      <text x="880" y="212">evaluator_idx</text><text x="1000" y="212">INT DEFAULT 0</text>
+      <text x="880" y="232">matrix</text><text x="1000" y="232">JSON (6×6)</text>
+      <text x="880" y="252">updated_at</text><text x="1000" y="252">TIMESTAMP onupdate</text>
+    </g>
+    <rect x="880" y="275" width="280" height="90" rx="6" fill="#fdf2f8" stroke="#be185d" stroke-dasharray="4 3"/>
+    <text x="1020" y="295" text-anchor="middle" font-size="11" font-weight="700" fill="#831843">UNIQUE (role, evaluator_idx)</text>
+    <text x="1020" y="315" text-anchor="middle" font-size="11" fill="#831843">role ∈ 5 role  ×  evaluator_idx 0..2</text>
+    <text x="1020" y="331" text-anchor="middle" font-size="11" fill="#831843">→ ideal 15 baris total</text>
+    <text x="1020" y="351" text-anchor="middle" font-size="11" fill="#831843">matrix = list 6×6 nilai Saaty</text>
+  </g>
+
+  <!-- users -->
+  <g>
+    <rect x="440" y="470" width="320" height="200" rx="8" fill="#ffffff" stroke="#d97706" stroke-width="2.5"/>
+    <rect x="440" y="470" width="320" height="42" rx="8" fill="#d97706"/>
+    <text x="600" y="498" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">users</text>
+    <g font-size="12" fill="#1e293b" font-family="Consolas, monospace">
+      <text x="460" y="532" font-weight="700" fill="#d97706">🔑 id</text><text x="580" y="532">SERIAL PK</text>
+      <text x="460" y="552">username</text><text x="580" y="552">VARCHAR(64) UNIQUE</text>
+      <text x="460" y="572">password_hash</text><text x="580" y="572">VARCHAR(255) bcrypt</text>
+      <text x="460" y="592">created_at</text><text x="580" y="592">TIMESTAMP DEFAULT now()</text>
+      <text x="460" y="612">updated_at</text><text x="580" y="612">TIMESTAMP onupdate</text>
+    </g>
+    <text x="600" y="646" text-anchor="middle" font-size="11" fill="#64748b" font-style="italic">Admin login (JWT auth)</text>
+    <text x="600" y="662" text-anchor="middle" font-size="11" fill="#64748b" font-style="italic">Default: admin123 / bcrypt hash (seeded)</text>
+  </g>
+
+  <!-- Relasi heroes 1—* hero_scores -->
+  <line x1="380" y1="245" x2="460" y2="245" stroke="#334155" stroke-width="2.5" marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="420" y="235" text-anchor="middle" font-size="11" font-weight="600" fill="#334155">1 ── ∗</text>
+  <text x="420" y="265" text-anchor="middle" font-size="10" fill="#64748b">cascade delete</text>
+
+  <!-- Legend -->
+  <rect x="60" y="470" width="320" height="200" rx="8" fill="#fef9c3" stroke="#a16207" stroke-width="1.5"/>
+  <text x="220" y="495" text-anchor="middle" font-size="14" font-weight="700" fill="#713f12">LEGENDA</text>
+  <g font-size="12" fill="#1e293b">
+    <text x="80" y="520" font-weight="700" fill="#1d4ed8">🔑</text><text x="105" y="520">Primary Key</text>
+    <text x="80" y="542" font-weight="700" fill="#dc2626">🔗</text><text x="105" y="542">Foreign Key</text>
+    <text x="80" y="564">Notasi: <tspan font-family="monospace">1 ── ∗</tspan> one-to-many</text>
+    <text x="80" y="586">JSON: PostgreSQL native JSON type</text>
+    <text x="80" y="608">Semua tabel: ORM SQLAlchemy 2</text>
+    <text x="80" y="630">Migrasi otomatis: Base.metadata.create_all()</text>
+    <text x="80" y="652">Host: Neon Postgres (serverless)</text>
+  </g>
+
+  <!-- Cardinality info bawah -->
+  <rect x="860" y="470" width="320" height="200" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="1020" y="495" text-anchor="middle" font-size="14" font-weight="700" fill="#075985">Ringkasan Kardinalitas</text>
+  <g font-size="12" fill="#1e293b">
+    <text x="880" y="522">• heroes : hero_scores  =  1 : 6</text>
+    <text x="900" y="540" font-size="10" fill="#475569">(satu hero punya 6 skor kriteria)</text>
+    <text x="880" y="565">• Total baris hero_scores</text>
+    <text x="900" y="583" font-size="10" fill="#475569">= jumlah_hero × 6</text>
+    <text x="880" y="608">• ahp_matrices independen dari heroes</text>
+    <text x="900" y="626" font-size="10" fill="#475569">(bobot kriteria per role, bukan per hero)</text>
+    <text x="880" y="651">• Total baris ahp_matrices = 5 × 3 = 15</text>
+  </g>
+</svg>

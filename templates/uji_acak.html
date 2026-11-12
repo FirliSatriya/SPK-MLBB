@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Uji Bobot Acak — SPK MLBB{% endblock %}
+{% block body_class %}admin-skin{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block navbar %}
+<nav class="topbar">
+  <a href="/admin" class="tb-brand">
+    <div class="tb-logo">M</div>
+    <div class="tb-brand-text">Draft Pick SPK<small>Admin Panel</small></div>
+  </a>
+  <div class="tb-spacer"></div>
+  <div class="tb-tabs">
+    <a class="tb-tab" href="/admin">Admin Panel</a>
+    <a class="tb-tab" href="/heroes">Data Hero</a>
+    <a class="tb-tab" href="/ahp">Bobot AHP</a>
+    <a class="tb-tab" href="/admin/uji-ekspert">Uji Ekspert</a>
+    <a class="tb-tab active" href="/admin/uji-acak">Uji Acak</a>
+    <a class="tb-tab" href="/">Draft Pick</a>
+  </div>
+  <div class="tb-user"><div class="tb-user-avatar">FS</div><div style="display:flex;flex-direction:column;line-height:1.2"><span class="tb-user-name">Firli Satriya</span><span class="tb-user-role">Administrator</span></div></div>
+  <a href="/logout" class="ap-btn ghost small">Keluar</a>
+  <button class="ap-theme-btn" onclick="toggleTheme()" title="Ganti tema">
+    <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8 8 0 0 1-3.37.73 8.15 8.15 0 0 1-8.05-8 8.59 8.59 0 0 1 .25-2 1 1 0 0 0-.32-1.05A1 1 0 0 0 8 2.36 10.14 10.14 0 1 0 22 14.05a1 1 0 0 0-.36-1.05Z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+  </button>
+</nav>
+{% endblock %}
+
+{% block content %}
+<style>
+  .uji-page {max-width:1400px;margin:0 auto;padding:24px;color:var(--text,#e2e8f0)}
+  .uji-page h1 {font-size:1.8rem;margin:0 0 8px}
+  .uji-page .subtitle {color:#94a3b8;margin-bottom:20px}
+  .uji-panel {background:rgba(30,41,59,.75);border:1px solid rgba(148,163,184,.2);
+              border-radius:12px;padding:20px;margin-bottom:20px}
+  .uji-form-row {display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+  .uji-form-row label {display:flex;flex-direction:column;gap:6px;font-size:.85rem;font-weight:600;color:#cbd5e1}
+  .uji-form-row select, .uji-form-row input {background:#0f172a;color:#e2e8f0;border:1px solid #334155;
+                                              border-radius:6px;padding:8px 12px}
+  .uji-form-row select {min-width:180px}
+  .uji-form-row input {min-width:140px}
+  .btn-uji {background:#7c3aed;color:#fff;border:none;padding:12px 28px;border-radius:8px;
+            cursor:pointer;font-weight:700;font-size:.95rem}
+  .btn-uji:hover {background:#6d28d9}
+  .btn-uji:disabled {background:#475569;cursor:not-allowed}
+  .btn-secondary {background:transparent;color:#94a3b8;border:1px solid #475569;padding:10px 20px;
+                  border-radius:8px;cursor:pointer;font-weight:600;margin-left:8px}
+  .hint {font-size:.75rem;color:#94a3b8;margin-top:6px}
+
+  /* 3×3 grid: 3 section per jenis bobot × 3 kolom per strategi */
+  .weight-section {margin-top:24px;background:rgba(15,23,42,.5);border-radius:12px;
+                   padding:16px;border:1px solid rgba(148,163,184,.15)}
+  .weight-section.ahp    {border-left:5px solid #1d4ed8}
+  .weight-section.random {border-left:5px solid #dc2626}
+  .weight-section.equal  {border-left:5px solid #64748b}
+  .weight-section-head {display:flex;justify-content:space-between;align-items:flex-start;
+                        margin-bottom:12px;flex-wrap:wrap;gap:12px}
+  .weight-section-head h2 {margin:0;font-size:1.2rem;color:#f1f5f9}
+  .weight-section-head .desc {color:#94a3b8;font-size:.8rem;margin-top:2px}
+  .weights-bar {display:flex;flex-wrap:wrap;gap:4px;font-size:.7rem;max-width:600px}
+  .weights-bar span {background:rgba(59,130,246,.15);padding:3px 8px;border-radius:4px;color:#cbd5e1}
+  .weights-bar b {color:#f1f5f9;margin-left:4px}
+
+  .strategy-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:1100px) {.strategy-grid {grid-template-columns:1fr}}
+  .result-col {background:rgba(30,41,59,.75);border-radius:8px;padding:12px;
+               border:1px solid rgba(148,163,184,.2)}
+  .result-col.default    {border-top:3px solid #a3a3a3}
+  .result-col.safe       {border-top:3px solid #22c55e}
+  .result-col.aggressive {border-top:3px solid #ef4444}
+  .result-col h3 {margin:0 0 4px;font-size:.95rem;color:#f1f5f9}
+  .result-col .sub {color:#94a3b8;font-size:.7rem;margin-bottom:10px}
+  table.rank-tbl {width:100%;border-collapse:collapse;font-size:.85rem}
+  table.rank-tbl th, table.rank-tbl td {padding:6px 8px;text-align:left;border-bottom:1px solid rgba(148,163,184,.12)}
+  table.rank-tbl th {color:#94a3b8;font-size:.7rem;font-weight:600;text-transform:uppercase}
+  table.rank-tbl td.rank {font-weight:700;color:#60a5fa;width:32px}
+  table.rank-tbl td.vi {font-family:Consolas,monospace;font-size:.8rem;color:#a3e635;text-align:right}
+  table.rank-tbl tr:first-child td {background:rgba(34,197,94,.08)}
+  .status-msg {padding:12px;border-radius:6px;margin-bottom:12px;font-size:.85rem}
+  .status-err {background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+  .status-info {background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.25)}
+
+  .compare-note {margin-top:20px;padding:12px 16px;background:rgba(124,58,237,.08);
+                 border:1px solid rgba(124,58,237,.25);border-radius:8px;font-size:.85rem;color:#c4b5fd}
+</style>
+
+<main class="uji-page">
+  <h1>Uji Bobot Acak — 9 Skenario</h1>
+  <p class="subtitle">
+    Bandingkan hasil ranking SAW dengan <strong>3 jenis bobot</strong>
+    (AHP, Acak, Sama) × <strong>3 strategi</strong> (Default, Safe, Aggressive)
+    = <strong>9 skenario total</strong>. Membuktikan bahwa AHP menghasilkan
+    ranking yang lebih terarah dibandingkan baseline acak/uniform di ketiga strategi.
+  </p>
+
+  <div class="uji-panel">
+    <div class="uji-form-row">
+      <label>ROLE
+        <select id="roleSel">
+          {% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <div style="margin-top:12px;margin-bottom:10px;font-size:.85rem;color:#cbd5e1">
+      <strong>Bobot per Kriteria</strong> — masukkan nilai bobot untuk masing-masing 6 kriteria
+      (skala 0-100). Sistem akan menormalisasi otomatis supaya jumlah = 100%. Klik
+      <strong>🎲 Isi Acak</strong> untuk generate 6 nilai random, atau ketik manual.
+    </div>
+
+    <div id="inputGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+      {% for c in criteria %}
+      <div class="crit-input" style="background:rgba(15,23,42,.6);padding:10px 12px;border-radius:8px;border:1px solid rgba(148,163,184,.15)">
+        <label style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:.75rem;color:#94a3b8;font-weight:600;letter-spacing:.03em">KRITERIA {{ loop.index }}</span>
+          <span style="font-size:.9rem;color:#f1f5f9;font-weight:600">{{ c }}</span>
+          <input type="number" min="0" max="100" step="0.1" value="0" data-idx="{{ loop.index0 }}"
+                 oninput="updatePct()"
+                 style="background:#0f172a;color:#e2e8f0;border:1px solid #334155;
+                        border-radius:6px;padding:8px 10px;font-family:Consolas,monospace">
+          <span style="font-size:.7rem;color:#60a5fa">
+            = <span class="pct" data-idx="{{ loop.index0 }}">0.0%</span> setelah normalisasi
+          </span>
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="margin-top:16px">
+      <button class="btn-uji" id="btnGo" onclick="runCompare()">🔬 Bandingkan</button>
+      <button class="btn-secondary" onclick="fillRandom()">🎲 Isi Acak</button>
+      <button class="btn-secondary" onclick="clearInputs()">Kosongkan</button>
+    </div>
+    <div class="hint" style="margin-top:10px">
+      💡 <strong>Bedanya dengan Uji Ekspert:</strong> Menu ini pakai bobot <strong>acak/arbitrary</strong>
+      buat baseline pembanding — bukan estimasi ekspert. Tujuannya membuktikan bahwa AHP menghasilkan
+      ranking yang lebih terarah dibanding bobot random dan bobot merata (1/n).
+    </div>
+  </div>
+
+  <div id="statusArea"></div>
+  <div id="resultsArea"></div>
+
+  <div class="compare-note">
+    📊 <strong>Cara baca hasil:</strong> Kalau ranking AHP jauh berbeda dari Acak — artinya
+    AHP benar-benar menggerakkan hasil (bobot berpengaruh). Kalau ranking AHP dekat dengan
+    Sama — artinya bobot AHP relatif merata. Kalau ranking Acak berubah drastis tiap seed,
+    itu tanda bahwa metode acak tidak stabil sebagai alternatif AHP.
+  </div>
+</main>
+
+<script>
+const CRITERIA = {{ criteria|tojson }};
+
+function getInputs() {
+  return [...document.querySelectorAll('#inputGrid input[type=number]')].map(x => +x.value || 0);
+}
+
+function updatePct() {
+  const vals = getInputs();
+  const s = vals.reduce((a, b) => a + b, 0);
+  document.querySelectorAll('#inputGrid .pct').forEach((el, i) => {
+    const p = s > 0 ? (vals[i] / s * 100) : 0;
+    el.textContent = p.toFixed(1) + '%';
+  });
+}
+
+function fillRandom() {
+  // Generate 6 nilai random 1-100 (integer) supaya user gampang baca angkanya
+  document.querySelectorAll('#inputGrid input[type=number]').forEach(el => {
+    el.value = (Math.floor(Math.random() * 100) + 1).toString();
+  });
+  updatePct();
+}
+
+function clearInputs() {
+  document.querySelectorAll('#inputGrid input[type=number]').forEach(el => el.value = 0);
+  updatePct();
+}
+
+async function runCompare() {
+  const role = document.getElementById('roleSel').value;
+  const randomWeights = getInputs();
+  if (randomWeights.every(v => v === 0)) {
+    document.getElementById('statusArea').innerHTML =
+      `<div class="status-msg status-err">⚠ Semua bobot bernilai 0. Klik "🎲 Isi Acak" atau isi manual minimal 1 kriteria.</div>`;
+    return;
+  }
+  const btn = document.getElementById('btnGo');
+  const statusArea = document.getElementById('statusArea');
+  btn.disabled = true; btn.textContent = '⏳ Menghitung...';
+  statusArea.innerHTML = '';
+  try {
+    const res = await fetch('/admin/uji-acak/compute', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({role, random_weights: randomWeights})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'request_failed');
+    renderResults(data);
+  } catch (e) {
+    statusArea.innerHTML = `<div class="status-msg status-err">⚠ ${e.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '🔬 Bandingkan';
+  }
+}
+
+const WEIGHT_META = {
+  ahp:    {cls: 'ahp',    title: 'Bobot AHP',   descBase: 'Dari matriks perbandingan berpasangan Saaty'},
+  random: {cls: 'random', title: 'Bobot Acak',  descBase: 'Input manual per kriteria (arbitrary), sudah dinormalisasi'},
+  equal:  {cls: 'equal',  title: 'Bobot Sama',  descBase: 'wᵢ = 1/6 (baseline uniform)'},
+};
+const STRATEGY_META = {
+  default:    {cls: 'default',    title: 'Default',    desc: 'Bobot murni tanpa penyesuaian'},
+  safe:       {cls: 'safe',       title: 'Safe (Aman)', desc: 'Durability+Utility ↑50%, Offense ↓30%'},
+  aggressive: {cls: 'aggressive', title: 'Aggressive', desc: 'Offense+Mobility ↑50%, Durability ↓30%'},
+};
+
+function renderResults(data) {
+  const order = ['ahp', 'random', 'equal'];
+  const strategies = data.strategies || ['default', 'safe', 'aggressive'];
+  const html = `
+    <div class="status-msg status-info">
+      ✅ Role: <strong>${data.role}</strong> · Kandidat: ${data.candidates_count} hero
+      · Total skenario: <strong>3 bobot × 3 strategi = 9</strong>
+    </div>
+    ${order.map(wk => renderSection(wk, data.weights[wk], data.rankings[wk], strategies)).join('')}
+  `;
+  document.getElementById('resultsArea').innerHTML = html;
+}
+
+function renderSection(wk, weights, rankByStrat, strategies) {
+  const meta = WEIGHT_META[wk];
+  const wBar = CRITERIA.map((c, i) =>
+    `<span>${c}<b>${(weights[i]*100).toFixed(1)}%</b></span>`
+  ).join('');
+  const desc = meta.descBase;
+  const cols = strategies.map(s => renderCol(s, rankByStrat[s])).join('');
+  return `
+    <section class="weight-section ${meta.cls}">
+      <div class="weight-section-head">
+        <div>
+          <h2>${meta.title}</h2>
+          <div class="desc">${desc}</div>
+        </div>
+        <div class="weights-bar">${wBar}</div>
+      </div>
+      <div class="strategy-grid">${cols}</div>
+    </section>
+  `;
+}
+
+function renderCol(strategyKey, ranking) {
+  const sm = STRATEGY_META[strategyKey];
+  const rows = ranking.map(r =>
+    `<tr>
+      <td class="rank">${r.rank}</td>
+      <td>${r.name}</td>
+      <td class="vi">${r.vi.toFixed(4)}</td>
+      <td class="vi">${r.vi_pct.toFixed(1)}%</td>
+    </tr>`
+  ).join('');
+  return `
+    <div class="result-col ${sm.cls}">
+      <h3>${sm.title}</h3>
+      <div class="sub">${sm.desc}</div>
+      <table class="rank-tbl">
+        <tr><th>#</th><th>Hero</th><th style="text-align:right">Vi</th><th style="text-align:right">Vi%</th></tr>
+        ${rows}
+      </table>
+    </div>
+  `;
+}
+</script>
+{% endblock %}

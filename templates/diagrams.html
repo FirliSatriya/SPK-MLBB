@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Diagram — SPK MLBB{% endblock %}
+{% block content %}
+<main class="main-content" style="max-width:1240px;margin:0 auto;padding:24px">
+  <h1 style="font-size:1.8rem;margin-bottom:8px">Diagram Sistem SPK Draft Pick MLBB</h1>
+  <p style="color:#64748b;margin-bottom:24px">
+    4 diagram siap-pakai untuk laporan skripsi. Klik tombol
+    <strong>Download PNG</strong> untuk simpan sebagai PNG (resolusi 2× supaya tajam saat di-print).
+    Atau klik <strong>Download SVG</strong> untuk versi vector (bisa di-edit di Illustrator/Inkscape).
+  </p>
+
+  {% for d in diagrams %}
+  <section style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.05)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <h2 style="margin:0;font-size:1.3rem">{{ d.title }}</h2>
+        <p style="margin:4px 0 0;color:#64748b;font-size:.9rem">{{ d.desc }}</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="downloadPng('{{ d.slug }}', '{{ d.file }}')"
+                style="background:#1d4ed8;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-weight:600">
+          ⬇ Download PNG
+        </button>
+        <a href="{{ url_for('static', filename='img/diagrams/' + d.file) }}"
+           download="{{ d.file }}"
+           style="background:#0f766e;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600">
+          ⬇ Download SVG
+        </a>
+      </div>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#f8fafc">
+      <img id="svg-{{ d.slug }}"
+           src="{{ url_for('static', filename='img/diagrams/' + d.file) }}"
+           alt="{{ d.title }}"
+           style="width:100%;height:auto;display:block">
+    </div>
+  </section>
+  {% endfor %}
+</main>
+
+<script>
+async function downloadPng(slug, svgFile) {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.textContent = '⏳ Rendering...';
+  btn.disabled = true;
+  try {
+    // Fetch raw SVG source
+    const svgUrl = "{{ url_for('static', filename='img/diagrams/') }}" + svgFile;
+    const res = await fetch(svgUrl);
+    const svgText = await res.text();
+
+    // Parse viewBox for dimensions
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, 'image/svg+xml');
+    const svg = doc.documentElement;
+    const vb = svg.getAttribute('viewBox').split(/\s+/).map(Number);
+    const width = vb[2];
+    const height = vb[3];
+    const scale = 2; // 2x resolution untuk hasil tajam
+
+    // Load SVG ke Image, gambar ke canvas
+    const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = url;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    // Convert ke PNG blob & trigger download
+    canvas.toBlob((blob) => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = svgFile.replace(/\.svg$/, '.png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }, 'image/png');
+  } catch (e) {
+    alert('Gagal render PNG: ' + e.message);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

@@ -143,7 +143,7 @@ aggregated[i][j] = (mat1[i][j] * mat2[i][j] * mat3[i][j]) ^ (1/3)
 | `/` | GET | Halaman simulasi draft pick | - |
 | `/ahp` | GET | Halaman bobot AHP per role | - |
 | `/heroes` | GET | Halaman database 132 hero | - |
-| `/login` | GET/POST | Login admin (username: `admin`, password: `admin123`) | - |
+| `/login` | GET/POST | Login admin (username: `admin123`, password: lihat env `ADMIN_PASSWORD`) | - |
 | `/logout` | GET | Logout admin, redirect ke /login | - |
 | `/admin` | GET | Admin panel (CRUD hero, lihat AHP, statistik) | Session |
 | `/admin/update_hero` | POST (JSON) | Update data hero (nama, class, 6 skor) | Session |
@@ -217,7 +217,9 @@ Pick: Red4, Blue4, Blue5, Red5
 
 ### 6.5 `login.html` — Login Admin
 - Form POST ke `/login`
-- Credential hardcoded: `admin` / `admin123`
+- Kredensial dari env `ADMIN_USERNAME` / `ADMIN_PASSWORD` (default: `admin123` / `TuhanYangMahaEsa987_*`)
+- Password disimpan sebagai hash bcrypt di tabel `users`, bukan plaintext
+- Throttle: maksimal 5 percobaan gagal per IP dalam 15 menit
 - Error message jika salah
 
 ### 6.6 `admin.html` — Admin Panel
@@ -340,5 +342,6 @@ python app.py
 ---
 
 ## 11. CREDENTIAL
-- **Admin login:** username `admin`, password `admin123`
+- **Admin login:** username `admin123`, password `TuhanYangMahaEsa987_*`
+  (bisa di-override via env `ADMIN_USERNAME` / `ADMIN_PASSWORD`; password di DB disimpan sebagai hash bcrypt)
 - **Flask secret key:** `spk-mlbb-secret-key-2026` (hardcoded, bisa di-override via env var `SECRET_KEY`)

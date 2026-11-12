@@ -67,6 +67,8 @@
           <li><a href="/ahp" {% if request.path=='/ahp' %}class="active" {% endif %}>Bobot AHP</a></li>
           <li><a href="/heroes" {% if request.path=='/heroes' %}class="active" {% endif %}>Data Hero</a></li>
           <li><a href="/admin" {% if request.path=='/admin' %}class="active" {% endif %}>Admin</a></li>
+          <li><a href="/admin/uji-ekspert" {% if request.path=='/admin/uji-ekspert' %}class="active" {% endif %}>Uji Ekspert</a></li>
+          <li><a href="/admin/uji-acak" {% if request.path=='/admin/uji-acak' %}class="active" {% endif %}>Uji Acak</a></li>
           <li><a href="/logout" class="nav-logout">Logout</a></li>
           {% else %}
           <li><a href="/login" {% if request.path=='/login' %}class="active" {% endif %}>Admin</a></li>

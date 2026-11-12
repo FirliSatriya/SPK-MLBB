@@ -12,6 +12,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from markupsafe import Markup
 from urllib.parse import quote
 import os, sys, math, re
+import random as _random
 import datetime as dt
 from functools import wraps
 
@@ -36,8 +37,17 @@ JWT_SECRET = os.environ.get("JWT_SECRET_KEY", app.secret_key)
 JWT_ALGO = "HS256"
 JWT_TTL_HOURS = 12
 JWT_COOKIE_NAME = "spk_auth"
-DEFAULT_ADMIN_USERNAME = "admin"
-DEFAULT_ADMIN_PASSWORD = "spkmlbb"
+# Kredensial admin bisa dioverride lewat env (disarankan untuk produksi).
+DEFAULT_ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin123")
+DEFAULT_ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "TuhanYangMahaEsa987_*")
+
+# Username akun default versi lama — dipakai hanya untuk migrasi otomatis.
+LEGACY_ADMIN_USERNAME = "admin"
+
+# Throttle login: maksimal 5 percobaan gagal per IP dalam 15 menit.
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_WINDOW_SECONDS = 15 * 60
+_login_failures = {}  # ip -> list[timestamp]
 
 
 def hash_password(plain: str) -> str:
@@ -79,11 +89,15 @@ def current_user():
 
 
 def login_required(fn):
-    """Decorator: redirect ke /login untuk HTML, 401 JSON untuk API."""
+    """Decorator: redirect ke /login untuk halaman HTML (GET),
+       401 JSON untuk endpoint API (POST/PUT/DELETE)."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         if current_user() is None:
-            if request.path.startswith("/admin/") or request.path.startswith("/api/"):
+            is_api = request.path.startswith("/api/") or (
+                request.path.startswith("/admin/") and request.method != "GET"
+            )
+            if is_api:
                 return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("login"))
         return fn(*args, **kwargs)
@@ -108,25 +122,64 @@ def clear_auth_cookie(resp):
 
 
 def seed_default_admin():
-    """Buat user admin default kalau tabel users kosong."""
+    """Pastikan akun admin tersedia.
+
+    - Tabel users kosong  -> buat akun admin dengan kredensial baru (bcrypt).
+    - Akun default lama   -> migrasi otomatis ke username/password baru
+                             supaya kredensial baru langsung berlaku.
+    """
     if not DB_ENABLED:
         return
     s = get_session()
     if s is None:
         return
     try:
+        if s.query(User).filter_by(username=DEFAULT_ADMIN_USERNAME).one_or_none():
+            return  # akun baru sudah ada — jangan sentuh password-nya
+
         if s.query(User).count() == 0:
             s.add(User(
                 username=DEFAULT_ADMIN_USERNAME,
                 password_hash=hash_password(DEFAULT_ADMIN_PASSWORD),
             ))
             s.commit()
-            print(f"[auth] Seeded default admin: {DEFAULT_ADMIN_USERNAME}/{DEFAULT_ADMIN_PASSWORD}")
+            print(f"[auth] Akun admin dibuat: {DEFAULT_ADMIN_USERNAME}")
+            return
+
+        legacy = s.query(User).filter_by(username=LEGACY_ADMIN_USERNAME).one_or_none()
+        if legacy is not None:
+            legacy.username = DEFAULT_ADMIN_USERNAME
+            legacy.password_hash = hash_password(DEFAULT_ADMIN_PASSWORD)
+            s.commit()
+            print("[auth] Akun admin lama dimigrasi ke kredensial baru.")
     except Exception as e:
         s.rollback()
         print(f"[auth] Seed admin failed: {e}")
     finally:
         s.close()
+
+
+def _client_ip() -> str:
+    fwd = request.headers.get("X-Forwarded-For", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
+def _login_locked(ip: str) -> bool:
+    now = dt.datetime.now(dt.timezone.utc).timestamp()
+    attempts = [t for t in _login_failures.get(ip, []) if now - t < LOGIN_WINDOW_SECONDS]
+    _login_failures[ip] = attempts
+    return len(attempts) >= LOGIN_MAX_ATTEMPTS
+
+
+def _record_login_failure(ip: str) -> None:
+    now = dt.datetime.now(dt.timezone.utc).timestamp()
+    _login_failures.setdefault(ip, []).append(now)
+
+
+def _clear_login_failures(ip: str) -> None:
+    _login_failures.pop(ip, None)
 
 # ============================================================
 # CONSTANTS
@@ -521,6 +574,25 @@ def ahp():
 def heroes():
     return render_template("heroes.html", heroes=HEROES, roles=ROLES, criteria=CRITERIA_ORDER)
 
+@app.route("/diagrams")
+def diagrams():
+    """Halaman preview + download 4 diagram sistem (PNG & SVG)."""
+    diagrams_list = [
+        {"slug": "arsitektur", "file": "arsitektur.svg",
+         "title": "1. Arsitektur Sistem",
+         "desc": "3-tier: Client (Browser) — Application (Flask) — Data (Neon Postgres + Cloudinary)."},
+        {"slug": "alur-sistem", "file": "alur-sistem.svg",
+         "title": "2. Alur Sistem End-to-End",
+         "desc": "Dari startup → admin update AHP → user request /api/recommend → hasil tampil."},
+        {"slug": "metodologi", "file": "metodologi.svg",
+         "title": "3. Metodologi AHP + SAW",
+         "desc": "AHP (Saaty) menentukan bobot 6 kriteria → SAW meranking hero berdasarkan bobot itu."},
+        {"slug": "erd", "file": "erd.svg",
+         "title": "4. ERD Database",
+         "desc": "Skema tabel heroes, hero_scores (1:6), ahp_matrices, users di Neon Postgres."},
+    ]
+    return render_template("diagrams.html", diagrams=diagrams_list)
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     # Sudah login? langsung ke admin.
@@ -528,18 +600,27 @@ def login():
         return redirect(url_for("admin"))
 
     if request.method == "POST":
+        ip = _client_ip()
+        if _login_locked(ip):
+            return render_template(
+                "login.html",
+                error="Terlalu banyak percobaan gagal. Coba lagi dalam 15 menit.",
+            ), 429
+
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
         s = get_session()
         try:
             user = s.query(User).filter_by(username=username).one_or_none() if s else None
             if user and verify_password(password, user.password_hash):
+                _clear_login_failures(ip)
                 token = create_jwt(user.username)
                 resp = make_response(redirect(url_for("admin")))
                 return set_auth_cookie(resp, token)
         finally:
             if s is not None:
                 s.close()
+        _record_login_failure(ip)
         return render_template("login.html", error="Username atau password salah")
     return render_template("login.html")
 
@@ -693,6 +774,146 @@ def update_ahp():
     recompute_role(role)
     db_upsert_matrix(role, idx, parsed)
     return jsonify({"ok": True, "ahp": AHP_RESULTS[role]})
+
+# ============================================================
+# UJI BOBOT — MENU 1 (Ekspert) & MENU 2 (Acak)
+# Skema pembanding untuk membuktikan efektivitas metode AHP-SAW
+# ============================================================
+def _equal_weights(n=6):
+    """Bobot sama rata: wᵢ = 1/n untuk semua kriteria."""
+    return [1.0 / n] * n
+
+
+def _random_weights(n=6, seed=None):
+    """Bobot acak uniform 0-1, dinormalisasi ke jumlah 1.
+       seed opsional untuk hasil reproducible saat demo.
+       Pakai Random instance lokal supaya tidak mempolusi global random state."""
+    rng = _random.Random(int(seed)) if seed is not None else _random.Random()
+    raw = [rng.random() for _ in range(n)]
+    s = sum(raw)
+    return [x / s for x in raw]
+
+
+def _normalize_weights(weights):
+    """Normalisasi list bobot ke jumlah = 1. Fallback ke equal kalau semuanya 0."""
+    s = sum(weights)
+    if s <= 0:
+        return _equal_weights(len(weights))
+    return [w / s for w in weights]
+
+
+STRATEGIES = ["default", "safe", "aggressive"]
+
+
+def _ranking_dict(cands, weights, scenario="default", top_n=10):
+    """Jalankan SAW dengan bobot custom + skenario strategis (default/safe/aggressive)."""
+    return calc_saw(cands, SCORES, weights, [], scenario)[:top_n]
+
+
+def _rankings_3x1(cands, weights, top_n=5):
+    """Return dict 3 strategi (default/safe/aggressive) untuk 1 jenis bobot.
+       Dipakai buat matriks 3×3 di menu uji-ekspert dan uji-acak."""
+    return {s: _ranking_dict(cands, weights, s, top_n) for s in STRATEGIES}
+
+
+@app.route("/admin/uji-ekspert")
+@login_required
+def uji_ekspert():
+    return render_template("uji_ekspert.html",
+                           roles=ROLES, criteria=CRITERIA_ORDER)
+
+
+@app.route("/admin/uji-ekspert/compute", methods=["POST"])
+@login_required
+def uji_ekspert_compute():
+    """Bandingkan ranking SAW untuk 3 skenario bobot: Sama, AHP-SAW, Ekspert."""
+    data = request.get_json() or {}
+    role = data.get("role")
+    expert_raw = data.get("expert_weights") or []
+    if role not in ROLES:
+        return jsonify({"error": "invalid_role"}), 400
+    if not isinstance(expert_raw, list) or len(expert_raw) != 6:
+        return jsonify({"error": "expert_weights_must_be_6_values"}), 400
+    try:
+        expert_raw = [float(x) for x in expert_raw]
+    except (ValueError, TypeError):
+        return jsonify({"error": "expert_weights_must_be_numeric"}), 400
+    if any(x < 0 for x in expert_raw):
+        return jsonify({"error": "expert_weights_must_be_nonnegative"}), 400
+
+    equal_w = _equal_weights(6)
+    ahp_w = list(AHP_RESULTS[role]["weights"])
+    expert_w = _normalize_weights(expert_raw)
+
+    cands = [h for h in HEROES if role in h["roles"]]
+
+    return jsonify({
+        "role": role,
+        "candidates_count": len(cands),
+        "criteria": CRITERIA_ORDER,
+        "strategies": STRATEGIES,
+        "weights": {
+            "equal":  [round(w, 6) for w in equal_w],
+            "ahp":    [round(w, 6) for w in ahp_w],
+            "expert": [round(w, 6) for w in expert_w],
+        },
+        "rankings": {
+            "equal":  _rankings_3x1(cands, equal_w),
+            "ahp":    _rankings_3x1(cands, ahp_w),
+            "expert": _rankings_3x1(cands, expert_w),
+        },
+    })
+
+
+@app.route("/admin/uji-acak")
+@login_required
+def uji_acak():
+    return render_template("uji_acak.html",
+                           roles=ROLES, criteria=CRITERIA_ORDER)
+
+
+@app.route("/admin/uji-acak/compute", methods=["POST"])
+@login_required
+def uji_acak_compute():
+    """Bandingkan ranking SAW untuk 3 skenario bobot: AHP, Acak (input manual), Sama.
+       User memasukkan 6 bobot langsung per kriteria (bisa diisi acak lewat tombol UI)."""
+    data = request.get_json() or {}
+    role = data.get("role")
+    random_raw = data.get("random_weights") or []
+    if role not in ROLES:
+        return jsonify({"error": "invalid_role"}), 400
+    if not isinstance(random_raw, list) or len(random_raw) != 6:
+        return jsonify({"error": "random_weights_must_be_6_values"}), 400
+    try:
+        random_raw = [float(x) for x in random_raw]
+    except (ValueError, TypeError):
+        return jsonify({"error": "random_weights_must_be_numeric"}), 400
+    if any(x < 0 for x in random_raw):
+        return jsonify({"error": "random_weights_must_be_nonnegative"}), 400
+
+    ahp_w = list(AHP_RESULTS[role]["weights"])
+    random_w = _normalize_weights(random_raw)
+    equal_w = _equal_weights(6)
+
+    cands = [h for h in HEROES if role in h["roles"]]
+
+    return jsonify({
+        "role": role,
+        "candidates_count": len(cands),
+        "criteria": CRITERIA_ORDER,
+        "strategies": STRATEGIES,
+        "weights": {
+            "ahp":    [round(w, 6) for w in ahp_w],
+            "random": [round(w, 6) for w in random_w],
+            "equal":  [round(w, 6) for w in equal_w],
+        },
+        "rankings": {
+            "ahp":    _rankings_3x1(cands, ahp_w),
+            "random": _rankings_3x1(cands, random_w),
+            "equal":  _rankings_3x1(cands, equal_w),
+        },
+    })
+
 
 # --- API recommend ---
 @app.route("/api/recommend", methods=["POST"])

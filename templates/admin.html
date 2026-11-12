@@ -15,11 +15,13 @@
 
   <div class="tb-spacer"></div>
 
-  <div class="tb-tabs" id="adminTabs">
-    <button class="tb-tab active" data-tab="heroes" onclick="showTab(this,'heroes')">Data Hero</button>
-    <button class="tb-tab" data-tab="ahp" onclick="showTab(this,'ahp')">Bobot AHP</button>
-    <button class="tb-tab" data-tab="rekomendasi" onclick="showTab(this,'rekomendasi')">Hasil Rekomendasi</button>
-    <button class="tb-tab" data-tab="stats" onclick="showTab(this,'stats')">Statistik</button>
+  <div class="tb-tabs">
+    <a class="tb-tab active" href="/admin">Admin Panel</a>
+    <a class="tb-tab" href="/heroes">Data Hero</a>
+    <a class="tb-tab" href="/ahp">Bobot AHP</a>
+    <a class="tb-tab" href="/admin/uji-ekspert">Uji Ekspert</a>
+    <a class="tb-tab" href="/admin/uji-acak">Uji Acak</a>
+    <a class="tb-tab" href="/">Draft Pick</a>
   </div>
 
   <div class="tb-user" title="Administrator">
@@ -66,6 +68,14 @@
     <div class="page-subtitle">
       Kelola hero, kriteria AHP, dan lihat statistik sistem pendukung keputusan.
     </div>
+  </div>
+
+  <!-- Sub-navigation untuk switching konten admin (SPA-style) -->
+  <div class="tb-tabs" id="adminTabs" style="background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.15);border-radius:10px;padding:6px;margin-bottom:20px;display:inline-flex;gap:4px">
+    <button class="tb-tab active" data-tab="heroes" onclick="showTab(this,'heroes')">Data Hero</button>
+    <button class="tb-tab" data-tab="ahp" onclick="showTab(this,'ahp')">Bobot AHP</button>
+    <button class="tb-tab" data-tab="rekomendasi" onclick="showTab(this,'rekomendasi')">Hasil Rekomendasi</button>
+    <button class="tb-tab" data-tab="stats" onclick="showTab(this,'stats')">Statistik</button>
   </div>
 
   <!-- ====================================

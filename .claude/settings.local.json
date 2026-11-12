@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl -s http://localhost:5000/)"
+      "Bash(curl -s http://localhost:5000/)",
+      "Bash(powershell *)",
+      "Bash(python *)",
+      "Bash(curl -s -o /dev/null -w \"root=%{http_code}\\\\nuji-ekspert=%{http_code}\\\\nuji-acak=%{http_code}\\\\n\" http://localhost:5000/)",
+      "Bash(curl -s -o /dev/null -w \"uji-ekspert=%{http_code}\\\\n\" http://localhost:5000/admin/uji-ekspert)",
+      "Bash(curl -s -o /dev/null -w \"uji-acak=%{http_code}\\\\n\" http://localhost:5000/admin/uji-acak)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/admin/uji-ekspert)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/admin/uji-acak)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/admin)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/admin/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000/ahp)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(curl -s -o /dev/null -w \"GET uji-ekspert = %{http_code}\\\\n\" http://localhost:5000/admin/uji-ekspert)",
+      "Bash(curl -s -o /dev/null -w \"POST compute \\(unauth\\) = %{http_code}\\\\n\" -X POST http://localhost:5000/admin/uji-ekspert/compute -H \"Content-Type: application/json\" -d '{\"role\":\"JUNGLING\",\"expert_weights\":[10,20,60,20,30,40]}')"
     ]
   }
 }

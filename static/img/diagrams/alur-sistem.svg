@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1080" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="1080" fill="#f8fafc"/>
+
+  <text x="600" y="40" text-anchor="middle" font-size="26" font-weight="700" fill="#0f172a">ALUR SISTEM END-TO-END</text>
+  <text x="600" y="66" text-anchor="middle" font-size="14" fill="#475569">Dari data masuk (startup) → user request → hasil rekomendasi tampil</text>
+
+  <!-- Start -->
+  <ellipse cx="600" cy="110" rx="90" ry="26" fill="#22c55e" stroke="#166534" stroke-width="2"/>
+  <text x="600" y="115" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">MULAI (python app.py)</text>
+
+  <line x1="600" y1="136" x2="600" y2="170" stroke="#334155" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- STARTUP block -->
+  <rect x="180" y="170" width="840" height="180" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="600" y="196" text-anchor="middle" font-size="16" font-weight="700" fill="#1e3a8a">FASE 1 — STARTUP (sekali saat server nyala)</text>
+
+  <rect x="210" y="220" width="240" height="50" rx="6" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="330" y="240" text-anchor="middle" font-size="12" font-weight="600">init_db()</text>
+  <text x="330" y="258" text-anchor="middle" font-size="11">Buat tabel kalau belum ada</text>
+
+  <rect x="480" y="220" width="240" height="50" rx="6" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="600" y="240" text-anchor="middle" font-size="12" font-weight="600">load_heroes_from_db()</text>
+  <text x="600" y="258" text-anchor="middle" font-size="11">Isi HEROES + SCORES</text>
+
+  <rect x="750" y="220" width="240" height="50" rx="6" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="870" y="240" text-anchor="middle" font-size="12" font-weight="600">load_ahp_from_db()</text>
+  <text x="870" y="258" text-anchor="middle" font-size="11">Isi AHP_MATS[role][idx]</text>
+
+  <rect x="330" y="290" width="540" height="50" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="600" y="310" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">recompute_role() untuk 5 role</text>
+  <text x="600" y="328" text-anchor="middle" font-size="11">geo_mean(3 matriks) → calc_ahp() → simpan AHP_RESULTS</text>
+
+  <!-- Down arrow -->
+  <line x1="600" y1="350" x2="600" y2="390" stroke="#334155" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- Admin flow (opsional) -->
+  <rect x="60" y="390" width="480" height="200" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="300" y="416" text-anchor="middle" font-size="15" font-weight="700" fill="#78350f">FASE 2A — ADMIN (opsional, kapan aja)</text>
+
+  <rect x="90" y="435" width="420" height="40" rx="6" fill="#ffffff" stroke="#d97706"/>
+  <text x="300" y="459" text-anchor="middle" font-size="12">POST /login → verify bcrypt → set JWT cookie</text>
+
+  <rect x="90" y="482" width="420" height="40" rx="6" fill="#ffffff" stroke="#d97706"/>
+  <text x="300" y="506" text-anchor="middle" font-size="12">CRUD hero (/admin/create|update|delete_hero)</text>
+
+  <rect x="90" y="529" width="420" height="40" rx="6" fill="#ffffff" stroke="#d97706"/>
+  <text x="300" y="547" text-anchor="middle" font-size="12" font-weight="600">POST /admin/update_ahp</text>
+  <text x="300" y="561" text-anchor="middle" font-size="10">→ enforce reciprocal → recompute_role() → simpan DB</text>
+
+  <!-- User flow -->
+  <rect x="660" y="390" width="480" height="200" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="900" y="416" text-anchor="middle" font-size="15" font-weight="700" fill="#14532d">FASE 2B — USER (tanpa login)</text>
+
+  <rect x="690" y="435" width="420" height="40" rx="6" fill="#ffffff" stroke="#16a34a"/>
+  <text x="900" y="459" text-anchor="middle" font-size="12">Buka /  →  render draft.html + refresh image</text>
+
+  <rect x="690" y="482" width="420" height="40" rx="6" fill="#ffffff" stroke="#16a34a"/>
+  <text x="900" y="506" text-anchor="middle" font-size="12">Pilih mode: Turnamen / Ranked / Custom</text>
+
+  <rect x="690" y="529" width="420" height="40" rx="6" fill="#ffffff" stroke="#16a34a"/>
+  <text x="900" y="553" text-anchor="middle" font-size="12">Klik slot pick/ban → JS fetchRecs()</text>
+
+  <line x1="900" y1="590" x2="900" y2="630" stroke="#334155" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- REKOMENDASI CORE -->
+  <rect x="120" y="630" width="960" height="260" rx="10" fill="#fce7f3" stroke="#be185d" stroke-width="2"/>
+  <text x="600" y="656" text-anchor="middle" font-size="16" font-weight="700" fill="#831843">FASE 3 — CORE: POST /api/recommend  (endpoint utama SPK)</text>
+
+  <rect x="150" y="678" width="900" height="42" rx="6" fill="#ffffff" stroke="#be185d"/>
+  <text x="600" y="702" text-anchor="middle" font-size="13">INPUT JSON: { exclude: [id yg sudah ban/pick], scenario: "default" | "safe" | "aggressive" }</text>
+
+  <rect x="150" y="732" width="900" height="42" rx="6" fill="#ffffff" stroke="#be185d"/>
+  <text x="600" y="756" text-anchor="middle" font-size="13" font-weight="600">LOOP untuk 5 role (JUNGLING, MID, EXP, ROAMING, GOLD)</text>
+
+  <rect x="180" y="784" width="270" height="50" rx="6" fill="#fdf2f8" stroke="#be185d"/>
+  <text x="315" y="805" text-anchor="middle" font-size="12" font-weight="600">1. Ambil bobot AHP</text>
+  <text x="315" y="822" text-anchor="middle" font-size="11">AHP_RESULTS[role]["weights"]</text>
+
+  <rect x="465" y="784" width="270" height="50" rx="6" fill="#fdf2f8" stroke="#be185d"/>
+  <text x="600" y="805" text-anchor="middle" font-size="12" font-weight="600">2. Filter kandidat</text>
+  <text x="600" y="822" text-anchor="middle" font-size="11">hero yg punya role tsb</text>
+
+  <rect x="750" y="784" width="270" height="50" rx="6" fill="#fdf2f8" stroke="#be185d"/>
+  <text x="885" y="805" text-anchor="middle" font-size="12" font-weight="600">3. calc_saw() → top 7</text>
+  <text x="885" y="822" text-anchor="middle" font-size="11">normalisasi + Vi + ranking</text>
+
+  <rect x="150" y="846" width="900" height="36" rx="6" fill="#ffffff" stroke="#be185d"/>
+  <text x="600" y="869" text-anchor="middle" font-size="12" font-weight="600">OUTPUT JSON: { "JUNGLING": [top 7], "MID LANE": [top 7], ..., "GOLD LANE": [top 7] }</text>
+
+  <line x1="600" y1="890" x2="600" y2="925" stroke="#334155" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- Render -->
+  <rect x="240" y="925" width="720" height="60" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="600" y="950" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">draft.html renderRecBar()</text>
+  <text x="600" y="970" text-anchor="middle" font-size="12">Tampilkan top 7 tiap role + tile "recommended" di pool grid + Vi% bar</text>
+
+  <line x1="600" y1="985" x2="600" y2="1015" stroke="#334155" stroke-width="2" marker-end="url(#arr2)"/>
+  <ellipse cx="600" cy="1040" rx="120" ry="26" fill="#22c55e" stroke="#166534" stroke-width="2"/>
+  <text x="600" y="1045" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">USER PILIH HERO — SELESAI</text>
+</svg>

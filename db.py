@@ -13,6 +13,17 @@ import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
+# Paksa driver psycopg2 (ada di requirements). Default dialect SQLAlchemy
+# berubah antar versi — SQLAlchemy baru memakai `psycopg` (v3) untuk URL
+# `postgresql://`, padahal yang terpasang psycopg2. Tanpa ini, di Vercel
+# muncul: "No module named 'psycopg'".
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len("postgres://"):]
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len("postgresql://"):]
+elif DATABASE_URL.startswith("postgresql+psycopg://"):
+    DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len("postgresql+psycopg://"):]
+
 try:
     from sqlalchemy import (
         create_engine, Column, String, Float, Integer, JSON, DateTime, ForeignKey,

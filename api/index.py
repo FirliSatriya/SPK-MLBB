@@ -34,20 +34,6 @@ def _startup_error_body(err: BaseException) -> bytes:
 try:
     from app import app  # noqa: E402,F401   (Vercel expects `app` in this module)
 
-    # Health endpoint kept here for parity with the previous /health route
-    from flask import jsonify
-
-    @app.route("/health")
-    def _health():
-        from app import HEROES, BASE_DIR
-        return jsonify({
-            "status": "ok",
-            "base_dir": BASE_DIR,
-            "heroes_count": len(HEROES),
-            "db_enabled": bool(os.environ.get("DATABASE_URL")),
-            "cloud_enabled": bool(os.environ.get("CLOUDINARY_URL")),
-        })
-
 except BaseException as _exc:  # SystemExit / ImportError / DB error, dll.
     # Jangan biarkan function mati tanpa pesan — tampilkan penyebabnya.
     traceback.print_exc()

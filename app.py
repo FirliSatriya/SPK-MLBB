@@ -603,6 +603,17 @@ app.jinja_env.globals['portrait_html'] = portrait_html
 # ============================================================
 # ROUTES
 # ============================================================
+@app.route("/health")
+def health():
+    """Debug/health check — dipakai untuk memastikan app + DB hidup."""
+    return jsonify({
+        "status": "ok",
+        "base_dir": BASE_DIR,
+        "heroes_count": len(HEROES),
+        "db_enabled": bool(DB_ENABLED),
+        "cloud_enabled": bool(getattr(cloud, "CLOUD_ENABLED", False)),
+    })
+
 @app.route("/")
 def draft():
     refresh_hero_images_from_db()

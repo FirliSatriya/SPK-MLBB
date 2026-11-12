@@ -8,7 +8,7 @@ try:
 except Exception:
     pass
 
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, make_response, Response
 from markupsafe import Markup
 from urllib.parse import quote
 import os, sys, math, re
@@ -437,13 +437,45 @@ def _startup_or_die():
         raise StartupError(f"Tidak bisa connect ke database: {str(e)[:300]}") from e
 
 
+def _startup_error_text(err: BaseException) -> str:
+    """Pesan diagnostik saat app gagal start (dipakai juga oleh Vercel)."""
+    env_keys = ["DATABASE_URL", "FLASK_SECRET_KEY", "JWT_SECRET_KEY",
+                "CLOUDINARY_URL", "ADMIN_USERNAME", "ADMIN_PASSWORD"]
+    env_report = "\n".join(
+        f"  - {k}: {'SET' if os.environ.get(k) else 'MISSING'}" for k in env_keys
+    )
+    return (
+        "Aplikasi gagal start.\n"
+        "\n"
+        f"{type(err).__name__}: {err}\n"
+        "\n"
+        f"Python: {sys.version.split()[0]}\n"
+        "Environment variables:\n"
+        f"{env_report}\n"
+        "\n"
+        "Kalau ini di Vercel: cek Deployments -> Functions -> Logs,\n"
+        "dan pastikan DATABASE_URL sudah diset (connection string Neon, mode pooled).\n"
+    )
+
+
+_STARTUP_ERROR = None
 try:
     HEROES, SCORES, AHP_MATS = _startup_or_die()
 except StartupError as _startup_err:
     if __name__ == "__main__":
         print(f"\nSTARTUP GAGAL: {_startup_err}\n")
         sys.exit(1)
-    raise
+    # Di serverless jangan biarkan function mati tanpa pesan: tetap expose app,
+    # lalu blok semua request dengan halaman diagnostik di bawah.
+    _STARTUP_ERROR = _startup_err
+    HEROES, SCORES, AHP_MATS = [], {}, {r: [] for r in ROLES}
+
+
+@app.before_request
+def _block_when_startup_failed():
+    if _STARTUP_ERROR is not None:
+        return Response(_startup_error_text(_STARTUP_ERROR), status=500,
+                        mimetype="text/plain")
 
 # Pad any role with fewer than 3 matrices using identity-ish fallback
 for r in ROLES:

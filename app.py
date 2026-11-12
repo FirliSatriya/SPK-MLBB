@@ -394,13 +394,17 @@ def load_ahp_from_db():
         s.close()
 
 # Load data at startup — DB-only.
+class StartupError(RuntimeError):
+    """Kegagalan saat inisialisasi aplikasi (mis. DB tidak bisa diakses)."""
+
+
 def _startup_or_die():
     if not DB_ENABLED:
         print("\n" + "=" * 70)
         print(" STARTUP GAGAL: DATABASE_URL tidak diset.")
         print(" Set DATABASE_URL di .env, lalu jalankan ulang.")
         print("=" * 70)
-        sys.exit(1)
+        raise StartupError("DATABASE_URL tidak diset di environment.")
     try:
         init_db()
         seed_default_admin()
@@ -410,9 +414,11 @@ def _startup_or_die():
             print(" STARTUP GAGAL: DB tersambung tapi tabel heroes kosong.")
             print(" Restore CSV dari git history lalu jalankan `python migrate.py`.")
             print("=" * 70)
-            sys.exit(1)
+            raise StartupError("Tabel heroes di database kosong.")
         db_mats_ = load_ahp_from_db()
         return heroes, scores, {r: db_mats_.get(r, []) for r in ROLES}
+    except StartupError:
+        raise
     except Exception as e:
         print("\n" + "=" * 70)
         print(" STARTUP GAGAL: tidak bisa connect ke Neon Postgres.")
@@ -428,10 +434,16 @@ def _startup_or_die():
         print(" 4. DATABASE_URL salah / password expired.")
         print("    -> Generate ulang connection string di Neon dashboard.")
         print("=" * 70)
+        raise StartupError(f"Tidak bisa connect ke database: {str(e)[:300]}") from e
+
+
+try:
+    HEROES, SCORES, AHP_MATS = _startup_or_die()
+except StartupError as _startup_err:
+    if __name__ == "__main__":
+        print(f"\nSTARTUP GAGAL: {_startup_err}\n")
         sys.exit(1)
-
-
-HEROES, SCORES, AHP_MATS = _startup_or_die()
+    raise
 
 # Pad any role with fewer than 3 matrices using identity-ish fallback
 for r in ROLES:

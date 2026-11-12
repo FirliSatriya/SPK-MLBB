@@ -96,8 +96,12 @@ else:
 _engine = None
 _Session = None
 
+_IS_SERVERLESS = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
 _CONNECT_ARGS = {
-    "connect_timeout": 30,
+    # Kecil supaya masih muat di batas waktu Vercel serverless
+    # (termasuk saat fallback pooler -> non-pooler). Neon biasanya <1s.
+    "connect_timeout": int(os.environ.get("DB_CONNECT_TIMEOUT", "4" if _IS_SERVERLESS else "5")),
     "keepalives": 1,
     "keepalives_idle": 30,
     "keepalives_interval": 10,
@@ -149,10 +153,18 @@ def get_session():
     return _Session()
 
 
-def init_db(retries=3, base_delay=3):
-    """Create tables if they don't exist. Retry beberapa kali untuk Neon cold-start."""
+def init_db(retries=None, base_delay=None):
+    """Create tables if they don't exist. Retry beberapa kali untuk Neon cold-start.
+
+    Di serverless (Vercel) retry dibuat minimal supaya tidak melewati batas
+    waktu function — lebih baik gagal cepat dengan pesan yang jelas.
+    """
     if not DB_ENABLED:
         return False
+    if retries is None:
+        retries = 1 if _IS_SERVERLESS else 3
+    if base_delay is None:
+        base_delay = 0 if _IS_SERVERLESS else 3
     import time
     last_err = None
     for attempt in range(1, retries + 1):
